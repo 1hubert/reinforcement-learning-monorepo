@@ -9,6 +9,16 @@
 		- LPM
 
 przeciwnicy w tych reaction tutorialach są (potwierdzone) w tych samych miejscach więc mogłoby się okazać, że tyle wystarczy by pobić mój wynik przynajmniej w jednej malutkiej części genshina (i mało przydatnej do zautomatyzowania), ale i tak byłby to zauważalny postęp ku "generalnym ai do zastąpienia ludzkich graczy".
+
+reset będzie trochę zajmował:
+- quit domain
+- wait a second + until a certain location near middle stops being white
+- hold 's' for ~2s -> click 'f'
+- click right bottom corner to start
+- wait a second + until a certain location near middle stops being white
+- hold 'w' for some predefined amount of time
+- click 'f' to start a domain (a new episode)
+(unfotunetely this might be the way to do it in the beginning as this is the easiest way to guarantee reprodubility of actions -> results)
 """
 import time
 from threading import Thread
