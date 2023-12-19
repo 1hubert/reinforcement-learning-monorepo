@@ -19,30 +19,72 @@ reset będzie trochę zajmował:
 - hold 'w' for some predefined amount of time
 - click 'f' to start a domain (a new episode)
 (unfotunetely this might be the way to do it in the beginning as this is the easiest way to guarantee reprodubility of actions -> results)
+
+zamiast wybierać postacie klawiszami 1, 2, bot będzie miał akcję 'change char'.
+obwódka wokół numerku aktywnej postaci != RGB(255, 255, 255)
+obwódka wokół numerku nieaktywnej postaci == RGB(255, 255, 255)
+
+domena którą będę się zajmował to pierwsza domena z reakcjami gdzie testujemy vaporize z barbarą i xiangling.
+
+co do śledzonych liczników:
+- są dwa: reactions_done i dmg_done
+- na początku można przetestować śledzenie obydwu osobno w dwóch różnych treningach
+- później można spróbować zrobić np. jakieś równanie typu:
+    reactions_done% * dmg_done%
+- może co każde 20 sekund gdzie nie podniósł maksymalizowanej wartości dostaje -1 punkt? albo co większą wartość cooldownu e + kilka sekund, bo chciałbym żeby na początku naucył się po prostu używania e na obydwu postaciach
+
+Vaporize Reactions Triggered: 0/15
+DMG Dealt to Monsters: 0/14000
 """
 import time
-from threading import Thread
 
 import numpy as np
 from PIL import ImageGrab
 import cv2
-exit_key_pressed = False
+from paddleocr import PaddleOCR
+
+def process_image(image):
+    """Dumb the original image down using OpenCV (Open Source Computer Vision Library).
+
+    :image: A numpy array with pixels in BGR.
+    """
+    grayscale_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    return grayscale_image
+
+def extract_damage_done(image):
+    result = ocr.ocr(image, det=False, cls=False)[0][0]
+    result = result.split(' ')[0]
+
+    try:
+        if 0 <= int(result) <= 14000:
+            return result
+        else:
+            return False
+    except ValueError:  # Not a a valid int
+        return False
 
 def main():
-    last_time = time.perf_counter()
-
     while True:
-        screen = ImageGrab.grab(bbox=(0, 70, 640, 550))
+        # Grab image
+        screen = ImageGrab.grab(bbox=(110, 180, 180, 188))
 
-        print(f'Loop took {time.perf_counter() - last_time} seconds')
-        last_time = time.perf_counter()
+        # Process image
+        # image = process_image(np.array(screen))
 
-        cv2.imshow('window', cv2.cvtColor(np.array(screen), cv2.COLOR_BGR2RGB))
+        # Show image
+        # cv2.imshow('window', image)
+
+        # Extract damage done from image
+        print(extract_damage_done(np.array(screen)))
 
         # ord(q) == 113
-        if cv2.waitKey(1) == 113:
-            cv2.destroyAllWindows()
-            break
+        # if cv2.waitKey(1) == 113:
+        #     cv2.destroyAllWindows()
+        #     break
 
 if __name__ == '__main__':
+    ocr = PaddleOCR(
+        lang='en',
+        rec_char_dict_path='./allowed_chars.txt'
+    )
     main()
