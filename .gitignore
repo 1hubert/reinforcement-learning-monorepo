@@ -1,3 +1,6 @@
+# Some folders used for things like storing images of generated plots
+./frozen_lake_savefig
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
