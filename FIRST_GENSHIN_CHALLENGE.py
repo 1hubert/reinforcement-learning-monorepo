@@ -37,11 +37,55 @@ Vaporize Reactions Triggered: 0/15
 DMG Dealt to Monsters: 0/14000
 """
 import time
+import random
 
 import numpy as np
 from PIL import ImageGrab
 import cv2
 from paddleocr import PaddleOCR
+import pyautogui
+
+def hard_reset_env():
+    """
+    Basically quit domain, re-enter, run up the stairs and click 'f' near the key to start a new episode with same initial environment.
+
+    Unfotunetely, this might be the way to do it in the MVP as this is the easiest way to guarantee reproducibility of mapping actions to results.
+    """
+    def wait_until_loading_screen_gone():
+        time.sleep(2)
+        while pyautogui.pixel(*LOADING_SCREEN) == (255, 255, 255):
+            time.sleep(0.5)
+
+    # Quit domain
+    pyautogui.hotkey('esc')
+    pyautogui.click(*EXIT_DOMAIN_BUTTON)
+
+    # Wait until the open world loads
+    wait_until_loading_screen_gone()
+
+    # Run up to the domain
+    with pyautogui.hold('s'):
+        time.sleep(2 + (random.random() / 5))
+
+    # Open domain and run it
+    pyautogui.hotkey('f')
+    pyautogui.click(*START_DOMAIN)
+
+    # Wait until domain loads
+    wait_until_loading_screen_gone()
+
+    # Click through the reaction tutorial
+    pyautogui.click(*LOADING_SCREEN)
+    time.sleep(1 + random.random())
+    pyautogui.click(*LOADING_SCREEN)
+    time.sleep(1 + random.random())
+
+    # Run up to the key (this cannot be randomized)
+    with pyautogui.hold('w'):
+        time.sleep(12)
+
+    # Start the domain!
+    pyautogui.hotkey('f')
 
 def process_image(image):
     """Dumb the original image down using OpenCV (Open Source Computer Vision Library).
