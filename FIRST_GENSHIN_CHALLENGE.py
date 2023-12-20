@@ -10,20 +10,6 @@
 
 przeciwnicy w tych reaction tutorialach są (potwierdzone) w tych samych miejscach więc mogłoby się okazać, że tyle wystarczy by pobić mój wynik przynajmniej w jednej malutkiej części genshina (i mało przydatnej do zautomatyzowania), ale i tak byłby to zauważalny postęp ku "generalnym ai do zastąpienia ludzkich graczy".
 
-reset będzie trochę zajmował:
-- quit domain
-- wait a second + until a certain location near middle stops being white
-- hold 's' for ~2s -> click 'f'
-- click right bottom corner to start
-- wait a second + until a certain location near middle stops being white
-- hold 'w' for some predefined amount of time
-- click 'f' to start a domain (a new episode)
-(unfotunetely this might be the way to do it in the beginning as this is the easiest way to guarantee reprodubility of actions -> results)
-
-zamiast wybierać postacie klawiszami 1, 2, bot będzie miał akcję 'change char'.
-obwódka wokół numerku aktywnej postaci != RGB(255, 255, 255)
-obwódka wokół numerku nieaktywnej postaci == RGB(255, 255, 255)
-
 domena którą będę się zajmował to pierwsza domena z reakcjami gdzie testujemy vaporize z barbarą i xiangling.
 
 co do śledzonych liczników:
@@ -44,6 +30,45 @@ from PIL import ImageGrab
 import cv2
 from paddleocr import PaddleOCR
 import pyautogui
+
+class GenshinAgent:
+    def __init__(self):
+        self.current_character = 1  # needs confirmation
+
+    def move_forward():
+        with pyautogui.hold('w'):
+            time.sleep(1)
+
+    def move_backward():
+        with pyautogui.hold('s'):
+            time.sleep(1)
+
+    def move_left():
+        with pyautogui.hold('a'):
+            time.sleep(1)
+
+    def move_right():
+        with pyautogui.hold('d'):
+            time.sleep(1)
+
+    def use_e():
+        pyautogui.hotkey('e')
+
+    def use_q():
+        pyautogui.hotkey('q')
+
+    def switch_characters(self):
+        if self.current_character == 1:
+            self.current_character = 2
+        else:
+            self.current_character = 1
+
+    def basic_attack():
+        pyautogui.click()
+
+    def charged_attack():
+        pyautogui.click(duration=0.5)  # needs confirmation
+
 
 def hard_reset_env():
     """
