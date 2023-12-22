@@ -21,6 +21,9 @@ co do śledzonych liczników:
 
 Vaporize Reactions Triggered: 0/15
 DMG Dealt to Monsters: 0/14000
+
+barbara - postać 1 (default)
+xiangling - postać 2
 """
 import time
 import random
@@ -30,6 +33,11 @@ from PIL import ImageGrab
 import cv2
 from paddleocr import PaddleOCR
 import pyautogui
+
+LOADING_SCREEN = (502, 338)
+EXIT_DOMAIN_BUTTON = (380, 380)
+SELECT_TRIAL_VAPORIZE = (152, 128)
+START_DOMAIN = (570, 527)
 
 class GenshinAgent:
     def __init__(self):
@@ -76,38 +84,41 @@ def hard_reset_env():
 
     Unfotunetely, this might be the way to do it in the MVP as this is the easiest way to guarantee reproducibility of mapping actions to results.
     """
-    def wait_until_loading_screen_gone():
-        time.sleep(2)
-        while pyautogui.pixel(*LOADING_SCREEN) == (255, 255, 255):
+    def wait_until_loading_screen_gone(delay):
+        time.sleep(delay)
+        loading_screen_color = pyautogui.pixel(*LOADING_SCREEN)
+        while pyautogui.pixel(*LOADING_SCREEN) == loading_screen_color:
             time.sleep(0.5)
 
     # Quit domain
     pyautogui.hotkey('esc')
+    time.sleep(random.random())
     pyautogui.click(*EXIT_DOMAIN_BUTTON)
 
     # Wait until the open world loads
-    wait_until_loading_screen_gone()
+    wait_until_loading_screen_gone(4)
 
     # Run up to the domain
     with pyautogui.hold('s'):
-        time.sleep(2 + (random.random() / 5))
+        time.sleep(2.5 + (random.random() / 5))
 
     # Open domain and run it
     pyautogui.hotkey('f')
+    time.sleep(2)
+    pyautogui.click(*SELECT_TRIAL_VAPORIZE)
     pyautogui.click(*START_DOMAIN)
 
     # Wait until domain loads
-    wait_until_loading_screen_gone()
+    wait_until_loading_screen_gone(1)
 
     # Click through the reaction tutorial
-    pyautogui.click(*LOADING_SCREEN)
-    time.sleep(1 + random.random())
-    pyautogui.click(*LOADING_SCREEN)
-    time.sleep(1 + random.random())
+    for _ in range(3):
+        time.sleep(2 + random.random())
+        pyautogui.click(*LOADING_SCREEN)
 
     # Run up to the key (this cannot be randomized)
     with pyautogui.hold('w'):
-        time.sleep(12)
+        time.sleep(9.1)
 
     # Start the domain!
     pyautogui.hotkey('f')
@@ -152,8 +163,14 @@ def main():
         #     break
 
 if __name__ == '__main__':
-    ocr = PaddleOCR(
-        lang='en',
-        rec_char_dict_path='./allowed_chars.txt'
-    )
-    main()
+    # ocr = PaddleOCR(
+    #     lang='en',
+    #     rec_char_dict_path='./allowed_chars.txt'
+    # )
+    # main()
+
+    # Focus on genshin's window
+    pyautogui.click(*LOADING_SCREEN)
+    time.sleep(1)
+
+    hard_reset_env()
