@@ -78,11 +78,15 @@ class GenshinAgent:
         pyautogui.click(duration=0.5)  # needs confirmation
 
 
-def hard_reset_env():
+def hard_reset_env(first_episode=False):
     """
     Basically quit domain, re-enter, run up the stairs and click 'f' near the key to start a new episode with same initial environment.
 
     Unfotunetely, this might be the way to do it in the MVP as this is the easiest way to guarantee reproducibility of mapping actions to results.
+
+    About the first episode:
+    - The human preparation required is to find the reaction domain on a map and click 'teleport'.
+    - to start the first episode, run this function with `first_episode` keyword argument set to True.
     """
     def wait_until_loading_screen_gone(delay):
         time.sleep(delay)
@@ -90,21 +94,26 @@ def hard_reset_env():
         while pyautogui.pixel(*LOADING_SCREEN) == loading_screen_color:
             time.sleep(0.5)
 
-    # Quit domain
-    pyautogui.hotkey('esc')
-    time.sleep(random.random())
-    pyautogui.click(*EXIT_DOMAIN_BUTTON)
+    if first_episode == False:
+        # Quit domain
+        pyautogui.hotkey('esc')
+        time.sleep(random.random())
+        pyautogui.click(*EXIT_DOMAIN_BUTTON)
 
-    # Wait until the open world loads
-    wait_until_loading_screen_gone(4)
+        # Wait until the open world loads
+        wait_until_loading_screen_gone(4)
 
-    # Run up to the domain
-    with pyautogui.hold('s'):
-        time.sleep(2.5 + (random.random() / 5))
+        # Run up to the domain
+        with pyautogui.hold('s'):
+            time.sleep(2.4 + (random.random() / 5))
+    else:
+        # Run up to the domain
+        with pyautogui.hold('w'):
+            time.sleep(2 + (random.random() / 5))
 
     # Open domain and run it
     pyautogui.hotkey('f')
-    time.sleep(2)
+    time.sleep(4)
     pyautogui.click(*SELECT_TRIAL_VAPORIZE)
     pyautogui.click(*START_DOMAIN)
 
@@ -113,12 +122,18 @@ def hard_reset_env():
 
     # Click through the reaction tutorial
     for _ in range(3):
-        time.sleep(2 + random.random())
+        time.sleep(1.1 + random.random())
         pyautogui.click(*LOADING_SCREEN)
+    time.sleep(0.1 + random.random() / 5)
 
     # Run up to the key (this cannot be randomized)
+    w_time_1 = random.uniform(0.5, 6)
+    w_time_2 = 7.4 - w_time_1
     with pyautogui.hold('w'):
-        time.sleep(9.1)
+        time.sleep(w_time_1)
+        pyautogui.keyDown('shiftleft')
+        pyautogui.keyUp('shiftleft')
+        time.sleep(w_time_2)
 
     # Start the domain!
     pyautogui.hotkey('f')
