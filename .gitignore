@@ -1,4 +1,7 @@
-# Some folders used for things like storing images of generated plots
+# Personal files
+account_info.txt
+
+# Folders used for things like storing images of generated plots
 ./frozen_lake_savefig
 
 # Byte-compiled / optimized / DLL files
