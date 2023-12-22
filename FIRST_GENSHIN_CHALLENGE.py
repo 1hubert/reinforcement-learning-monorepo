@@ -39,6 +39,7 @@ EXIT_DOMAIN_BUTTON = (380, 380)
 SELECT_TRIAL_VAPORIZE = (152, 128)
 START_DOMAIN = (570, 527)
 
+
 class GenshinAgent:
     def __init__(self):
         self.current_character = 1  # needs confirmation
@@ -67,15 +68,19 @@ class GenshinAgent:
 
     def switch_characters(self):
         if self.current_character == 1:
+            pyautogui.hotkey('2')
             self.current_character = 2
         else:
+            pyautogui.hotkey('1')
             self.current_character = 1
 
     def basic_attack():
         pyautogui.click()
 
     def charged_attack():
-        pyautogui.click(duration=0.5)  # needs confirmation
+        pyautogui.mouseDown()
+        time.sleep(0.24)
+        pyautogui.mouseUp()
 
 
 def hard_reset_env(first_episode=False):
@@ -138,6 +143,7 @@ def hard_reset_env(first_episode=False):
     # Start the domain!
     pyautogui.hotkey('f')
 
+
 def process_image(image):
     """Dumb the original image down using OpenCV (Open Source Computer Vision Library).
 
@@ -145,6 +151,7 @@ def process_image(image):
     """
     grayscale_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     return grayscale_image
+
 
 def extract_damage_done(image):
     result = ocr.ocr(image, det=False, cls=False)[0][0]
@@ -157,6 +164,7 @@ def extract_damage_done(image):
             return False
     except ValueError:  # Not a a valid int
         return False
+
 
 def main():
     while True:
@@ -176,6 +184,7 @@ def main():
         # if cv2.waitKey(1) == 113:
         #     cv2.destroyAllWindows()
         #     break
+
 
 if __name__ == '__main__':
     # ocr = PaddleOCR(
