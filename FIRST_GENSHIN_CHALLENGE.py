@@ -27,6 +27,7 @@ xiangling - postać 2
 """
 from time import sleep, perf_counter
 import random
+import logging
 
 import numpy as np
 from PIL import ImageGrab
@@ -69,27 +70,27 @@ class GenshinAgent:
         }
 
     def move_forward(self):
-        print('action: moving forward')
+        logging.debug('action: moving forward')
         with pyautogui.hold('w'):
             sleep(1)
 
     def move_backward(self):
-        print('action: moving backward')
+        logging.debug('action: moving backward')
         with pyautogui.hold('s'):
             sleep(1)
 
     def move_left(self):
-        print('action: moving left')
+        logging.debug('action: moving left')
         with pyautogui.hold('a'):
             sleep(1)
 
     def move_right(self):
-        print('action: moving right')
+        logging.debug('action: moving right')
         with pyautogui.hold('d'):
             sleep(1)
 
     def use_e(self):
-        print('action: using e')
+        logging.debug('action: using e')
         pyautogui.hotkey('e')
 
         # Do nothing during cast time
@@ -100,11 +101,11 @@ class GenshinAgent:
 
     def switch_characters(self):
         if self.current_char == 1:
-            print('action: switching chars 1->2')
+            logging.debug('action: switching chars 1->2')
             pyautogui.hotkey('2')
             self.current_char = 2
         else:
-            print('action: switching chars 2->1')
+            logging.debug('action: switching chars 2->1')
             pyautogui.hotkey('1')
             self.current_char = 1
 
@@ -112,11 +113,11 @@ class GenshinAgent:
         self.next_usage_times[self.switch_characters] = perf_counter() + 1
 
     def basic_attack(self):
-        print('action: using basic attack')
+        logging.debug('action: using basic attack')
         pyautogui.click()
 
     def charged_attack(self):
-        print('action: using charged attack')
+        logging.debug('action: using charged attack')
         pyautogui.mouseDown()
         sleep(0.24)
         pyautogui.mouseUp()
@@ -137,8 +138,6 @@ class GenshinAgent:
         action = self.get_ready_action()
         if action:
             action()
-        else:
-            print("All abilities on cooldown")
 
     def test_all_actions(self):
         self.move_forward()
@@ -258,6 +257,11 @@ def main():
 
 
 if __name__ == '__main__':
+    logging.basicConfig(
+        level=logging.DEBUG,
+        format='[%(levelname)s] %(asctime)s - %(message)s'
+    )
+
     # ocr = PaddleOCR(
     #     lang='en',
     #     rec_char_dict_path='./allowed_chars.txt'
