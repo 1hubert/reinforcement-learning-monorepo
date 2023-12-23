@@ -44,26 +44,27 @@ class GenshinAgent:
     def __init__(self):
         self.current_character = 1  # needs confirmation
 
-    def move_forward():
+    def move_forward(self):
         with pyautogui.hold('w'):
             time.sleep(1)
 
-    def move_backward():
+    def move_backward(self):
         with pyautogui.hold('s'):
             time.sleep(1)
 
-    def move_left():
+    def move_left(self):
         with pyautogui.hold('a'):
             time.sleep(1)
 
-    def move_right():
+    def move_right(self):
         with pyautogui.hold('d'):
             time.sleep(1)
 
-    def use_e():
+    def use_e(self):
         pyautogui.hotkey('e')
+        time.sleep(0.5)
 
-    def use_q():
+    def use_q(self):
         pyautogui.hotkey('q')
 
     def switch_characters(self):
@@ -74,10 +75,10 @@ class GenshinAgent:
             pyautogui.hotkey('1')
             self.current_character = 1
 
-    def basic_attack():
+    def basic_attack(self):
         pyautogui.click()
 
-    def charged_attack():
+    def charged_attack(self):
         pyautogui.mouseDown()
         time.sleep(0.24)
         pyautogui.mouseUp()
@@ -154,7 +155,10 @@ def process_image(image):
 
 
 def extract_damage_done(image):
+    # Get text
     result = ocr.ocr(image, det=False, cls=False)[0][0]
+
+    # Get first number out of str like '11023 14000'
     result = result.split(' ')[0]
 
     try:
@@ -197,4 +201,23 @@ if __name__ == '__main__':
     pyautogui.click(*LOADING_SCREEN)
     time.sleep(1)
 
-    hard_reset_env()
+
+    # Test all actions of GenshinAgent
+    agent = GenshinAgent()
+
+    # These are OK
+    agent.move_forward()
+    agent.move_backward()
+    agent.move_left()
+    agent.move_right()
+
+    # These all make character non-interactive for some time after performing. One bad thing is that this time varies between character for all of the below.
+    # The solution I'm thinking of currently:
+    # - add time.sleep after each action. the value will be the bigger value between xiangling and barbara
+    # - also, add a cooldown for both e and q (depending on char)
+    # - also, when a random_action will be called, an E or Q that's on cooldown won't be performed
+    agent.use_e()
+    agent.use_q()
+    agent.switch_characters()
+    agent.basic_attack()
+    agent.charged_attack()
