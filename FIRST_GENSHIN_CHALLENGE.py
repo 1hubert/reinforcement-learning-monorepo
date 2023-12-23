@@ -64,9 +64,6 @@ class GenshinAgent:
         pyautogui.hotkey('e')
         time.sleep(0.5)
 
-    def use_q(self):
-        pyautogui.hotkey('q')
-
     def switch_characters(self):
         if self.current_character == 1:
             pyautogui.hotkey('2')
