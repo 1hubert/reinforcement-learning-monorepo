@@ -42,44 +42,111 @@ START_DOMAIN = (570, 527)
 
 class GenshinAgent:
     def __init__(self):
-        self.current_character = 1  # needs confirmation
+        self.current_char = 1
+        self.actions = [
+            self.move_forward,
+            self.move_backward,
+            self.move_left,
+            self.move_right,
+            self.use_e,
+            # self.switch_characters,
+            self.basic_attack,
+            self.charged_attack
+        ]
+        self.next_usage_times = {
+            self.use_e: 0,
+            self.switch_characters: 0
+        }
+        self.stats = {
+            1: {
+                'e_cooldown': 32,
+                'e_casttime': 0.5
+            },
+            2: {
+                'e_cooldown': 12,
+                'e_casttime': 0.5
+            }
+        }
 
     def move_forward(self):
+        print('action: moving forward')
         with pyautogui.hold('w'):
             time.sleep(1)
 
     def move_backward(self):
+        print('action: moving backward')
         with pyautogui.hold('s'):
             time.sleep(1)
 
     def move_left(self):
+        print('action: moving left')
         with pyautogui.hold('a'):
             time.sleep(1)
 
     def move_right(self):
+        print('action: moving right')
         with pyautogui.hold('d'):
             time.sleep(1)
 
     def use_e(self):
+        print('action: using e')
         pyautogui.hotkey('e')
-        time.sleep(0.5)
+
+        # Do nothing during cast time
+        time.sleep(self.stats[self.current_char]['e_casttime'])
+
+        # Keep track of cooldown
+        self.next_usage_times[self.use_e] = time.perf_counter() + self.stats[self.current_char]['e_cooldown']
 
     def switch_characters(self):
-        if self.current_character == 1:
+        if self.current_char == 1:
+            print('action: switching chars 1->2')
             pyautogui.hotkey('2')
-            self.current_character = 2
+            self.current_char = 2
         else:
+            print('action: switching chars 2->1')
             pyautogui.hotkey('1')
-            self.current_character = 1
+            self.current_char = 1
+
+        # Keep track of cooldown (1s)
+        self.next_usage_times[self.switch_characters] = time.perf_counter() + 1
 
     def basic_attack(self):
+        print('action: using basic attack')
         pyautogui.click()
 
     def charged_attack(self):
+        print('action: using charged attack')
         pyautogui.mouseDown()
         time.sleep(0.24)
         pyautogui.mouseUp()
 
+    def action_on_cooldown(self, action):
+        next_usage_time = self.next_usage_times.get(action, 0)
+        return  next_usage_time > time.perf_counter()
+
+    def get_ready_action(self):
+        ready_actions = [a for a in self.actions if not self.action_on_cooldown(a)]
+        if len(ready_actions) > 0:
+            return random.choice(ready_actions)
+
+    def take_action(self):
+        action = self.get_ready_action()
+        if action:
+            action()
+        else:
+            print("All abilities on cooldown")
+
+    def test_all_actions(self):
+        self.move_forward()
+        self.move_backward()
+        self.move_left()
+        self.move_right()
+        self.use_e()
+        self.use_q()
+        self.switch_characters()
+        self.basic_attack()
+        self.charged_attack()
 
 def hard_reset_env(first_episode=False):
     """
@@ -198,23 +265,8 @@ if __name__ == '__main__':
     pyautogui.click(*LOADING_SCREEN)
     time.sleep(1)
 
+    # hard_reset_env(first_episode=True)
 
-    # Test all actions of GenshinAgent
     agent = GenshinAgent()
-
-    # These are OK
-    agent.move_forward()
-    agent.move_backward()
-    agent.move_left()
-    agent.move_right()
-
-    # These all make character non-interactive for some time after performing. One bad thing is that this time varies between character for all of the below.
-    # The solution I'm thinking of currently:
-    # - add time.sleep after each action. the value will be the bigger value between xiangling and barbara
-    # - also, add a cooldown for both e and q (depending on char)
-    # - also, when a random_action will be called, an E or Q that's on cooldown won't be performed
-    agent.use_e()
-    agent.use_q()
-    agent.switch_characters()
-    agent.basic_attack()
-    agent.charged_attack()
+    while True:
+        agent.take_action()
