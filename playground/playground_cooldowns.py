@@ -2,32 +2,40 @@ import random
 import time
 
 class GenshinAgent:
+
     def __init__(self):
-        self.ability_a_cooldown = 0
-        self.ability_b_cooldown = 0
+        self.actions = [self.fireball, self.heal]
+        self.last_used = {
+            self.fireball: 0,
+            self.heal: 0
+        }
 
-    def use_ability_a(self):
-        if time.perf_counter() < self.ability_a_cooldown:
-            return "Ability A on cooldown"
-        print("Used Ability A")
-        self.ability_a_cooldown = time.perf_counter() + 12
+    def fireball(self):
+        print("Used Fireball")
+        self.last_used[self.fireball] = time.time() + 5
 
-    def use_ability_b(self):
-        if time.perf_counter() < self.ability_b_cooldown:
-            return "Ability B on cooldown"
-        print("Used Ability B")
-        self.ability_b_cooldown = time.perf_counter() + 10
+    def heal(self):
+        print("Used Heal")
+        self.last_used[self.heal] = time.time() + 10
+
+    def action_on_cooldown(self, action):
+        last_used = self.last_used.get(action, 0)
+        return  time.time() < last_used
+
+    def get_ready_action(self):
+        ready_actions = [a for a in self.actions if not self.action_on_cooldown(a)]
+        if len(ready_actions) > 0:
+            return random.choice(ready_actions)
 
     def take_action(self):
-        action = random.choice(["a", "b"])
-        if action == "a":
-            return self.use_ability_a()
-        elif action == "b":
-            return self.use_ability_b()
+        action = self.get_ready_action()
+        if action:
+            action()
+        else:
+            print("All abilities on cooldown")
 
 agent = GenshinAgent()
+
 while True:
-    action_result = agent.take_action()
-    if action_result:
-        print(action_result)
-    # time.sleep(0.5) # sleep so we can see the outputs
+    agent.take_action()
+    time.sleep(0.5)
