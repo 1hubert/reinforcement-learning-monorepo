@@ -121,6 +121,9 @@ class GenshinAgent:
         sleep(0.24)
         pyautogui.mouseUp()
 
+        # Do nothing during cast time
+        sleep(0.76)
+
     def action_on_cooldown(self, action):
         next_usage_time = self.next_usage_times.get(action, 0)
         return  next_usage_time > perf_counter()
