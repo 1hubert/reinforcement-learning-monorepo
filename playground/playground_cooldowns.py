@@ -5,22 +5,22 @@ class GenshinAgent:
 
     def __init__(self):
         self.actions = [self.fireball, self.heal]
-        self.last_used = {
+        self.next_usage_times = {
             self.fireball: 0,
             self.heal: 0
         }
 
     def fireball(self):
         print("Used Fireball")
-        self.last_used[self.fireball] = time.time() + 5
+        self.next_usage_times[self.fireball] = time.time() + 5
 
     def heal(self):
         print("Used Heal")
-        self.last_used[self.heal] = time.time() + 10
+        self.next_usage_times[self.heal] = time.time() + 10
 
     def action_on_cooldown(self, action):
-        last_used = self.last_used.get(action, 0)
-        return  time.time() < last_used
+        next_usage_time = self.next_usage_times.get(action, 0)
+        return  next_usage_time > time.time()
 
     def get_ready_action(self):
         ready_actions = [a for a in self.actions if not self.action_on_cooldown(a)]
