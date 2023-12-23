@@ -25,7 +25,7 @@ DMG Dealt to Monsters: 0/14000
 barbara - postać 1 (default)
 xiangling - postać 2
 """
-import time
+from time import sleep, perf_counter
 import random
 
 import numpy as np
@@ -71,32 +71,32 @@ class GenshinAgent:
     def move_forward(self):
         print('action: moving forward')
         with pyautogui.hold('w'):
-            time.sleep(1)
+            sleep(1)
 
     def move_backward(self):
         print('action: moving backward')
         with pyautogui.hold('s'):
-            time.sleep(1)
+            sleep(1)
 
     def move_left(self):
         print('action: moving left')
         with pyautogui.hold('a'):
-            time.sleep(1)
+            sleep(1)
 
     def move_right(self):
         print('action: moving right')
         with pyautogui.hold('d'):
-            time.sleep(1)
+            sleep(1)
 
     def use_e(self):
         print('action: using e')
         pyautogui.hotkey('e')
 
         # Do nothing during cast time
-        time.sleep(self.stats[self.current_char]['e_casttime'])
+        sleep(self.stats[self.current_char]['e_casttime'])
 
         # Keep track of cooldown
-        self.next_usage_times[self.use_e] = time.perf_counter() + self.stats[self.current_char]['e_cooldown']
+        self.next_usage_times[self.use_e] = perf_counter() + self.stats[self.current_char]['e_cooldown']
 
     def switch_characters(self):
         if self.current_char == 1:
@@ -109,7 +109,7 @@ class GenshinAgent:
             self.current_char = 1
 
         # Keep track of cooldown (1s)
-        self.next_usage_times[self.switch_characters] = time.perf_counter() + 1
+        self.next_usage_times[self.switch_characters] = perf_counter() + 1
 
     def basic_attack(self):
         print('action: using basic attack')
@@ -118,12 +118,12 @@ class GenshinAgent:
     def charged_attack(self):
         print('action: using charged attack')
         pyautogui.mouseDown()
-        time.sleep(0.24)
+        sleep(0.24)
         pyautogui.mouseUp()
 
     def action_on_cooldown(self, action):
         next_usage_time = self.next_usage_times.get(action, 0)
-        return  next_usage_time > time.perf_counter()
+        return  next_usage_time > perf_counter()
 
     def get_ready_action(self):
         ready_actions = [a for a in self.actions if not self.action_on_cooldown(a)]
@@ -159,15 +159,15 @@ def hard_reset_env(first_episode=False):
     - to start the first episode, run this function with `first_episode` keyword argument set to True.
     """
     def wait_until_loading_screen_gone(delay):
-        time.sleep(delay)
+        sleep(delay)
         loading_screen_color = pyautogui.pixel(*LOADING_SCREEN)
         while pyautogui.pixel(*LOADING_SCREEN) == loading_screen_color:
-            time.sleep(0.5)
+            sleep(0.5)
 
     if first_episode == False:
         # Quit domain
         pyautogui.hotkey('esc')
-        time.sleep(random.random())
+        sleep(random.random())
         pyautogui.click(*EXIT_DOMAIN_BUTTON)
 
         # Wait until the open world loads
@@ -175,15 +175,15 @@ def hard_reset_env(first_episode=False):
 
         # Run up to the domain
         with pyautogui.hold('s'):
-            time.sleep(2.4 + (random.random() / 5))
+            sleep(2.4 + (random.random() / 5))
     else:
         # Run up to the domain
         with pyautogui.hold('w'):
-            time.sleep(2 + (random.random() / 5))
+            sleep(2 + (random.random() / 5))
 
     # Open domain and run it
     pyautogui.hotkey('f')
-    time.sleep(4)
+    sleep(4)
     pyautogui.click(*SELECT_TRIAL_VAPORIZE)
     pyautogui.click(*START_DOMAIN)
 
@@ -192,18 +192,18 @@ def hard_reset_env(first_episode=False):
 
     # Click through the reaction tutorial
     for _ in range(3):
-        time.sleep(1.1 + random.random())
+        sleep(1.1 + random.random())
         pyautogui.click(*LOADING_SCREEN)
-    time.sleep(0.1 + random.random() / 5)
+    sleep(0.1 + random.random() / 5)
 
     # Run up to the key (this cannot be randomized)
     w_time_1 = random.uniform(0.5, 6)
     w_time_2 = 7.4 - w_time_1
     with pyautogui.hold('w'):
-        time.sleep(w_time_1)
+        sleep(w_time_1)
         pyautogui.keyDown('shiftleft')
         pyautogui.keyUp('shiftleft')
-        time.sleep(w_time_2)
+        sleep(w_time_2)
 
     # Start the domain!
     pyautogui.hotkey('f')
@@ -263,7 +263,7 @@ if __name__ == '__main__':
 
     # Focus on genshin's window
     pyautogui.click(*LOADING_SCREEN)
-    time.sleep(1)
+    sleep(1)
 
     # hard_reset_env(first_episode=True)
 
