@@ -215,6 +215,9 @@ def extract_damage_done(show_image=False):
     # Grab image
     image = ImageGrab.grab(bbox=(110, 180, 180, 188))
 
+    # Turn image into a numpy array
+    image = np.array(image)
+    
     # Show image
     if show_image:
         cv2.imshow('window', image)
