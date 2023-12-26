@@ -217,13 +217,10 @@ def extract_damage_done(show_image=False):
 
     # Turn image into a numpy array
     image = np.array(image)
-    
+
     # Show image
     if show_image:
         cv2.imshow('window', image)
-
-    # Turn image into a numpy array
-    image = np.array(image)
 
     # Get text
     result = ocr.ocr(image, det=False, cls=False)[0][0]
@@ -239,16 +236,42 @@ def extract_damage_done(show_image=False):
     except ValueError:  # Not a a valid int
         return False
 
+def extract_reactions_done(show_image=False):
+    # Grab image
+    image = ImageGrab.grab(bbox=(135, 165, 154, 178))  # ltrb
+
+    # Turn image into a numpy array
+    image = np.array(image)
+
+    # Show image
+    if show_image:
+        cv2.imshow('window', image)
+
+
+    # Get text
+    result = ocr.ocr(image, det=False, cls=False)[0][0]
+
+    # # Get first number out of str like '0 15'
+    result = result.split(' ')[0]
+
+    try:
+        if 0 <= int(result) <= 15:
+            return result
+        else:
+            return False
+    except ValueError:  # Not a a valid int
+        return False
+
 
 def main():
     while True:
         # Extract damage done from image
-        print(extract_damage_done())
+        print(extract_reactions_done(show_image=True))
 
         # ord(q) == 113
-        # if cv2.waitKey(1) == 113:
-        #     cv2.destroyAllWindows()
-        #     break
+        if cv2.waitKey(1) == 113:
+            cv2.destroyAllWindows()
+            break
 
 
 if __name__ == '__main__':
@@ -257,18 +280,16 @@ if __name__ == '__main__':
         format='[%(levelname)s] %(asctime)s - %(message)s'
     )
 
-    # ocr = PaddleOCR(
-    #     lang='en',
-    #     rec_char_dict_path='./allowed_chars.txt'
-    # )
-    # main()
+    ocr = PaddleOCR(
+        lang='en',
+        rec_char_dict_path='./allowed_chars.txt'
+    )
 
-    # Focus on genshin's window
     pyautogui.click(*LOADING_SCREEN)
-    sleep(1)
-
     # hard_reset_env(first_episode=True)
+    main()
 
-    agent = GenshinAgent()
-    while True:
-        agent.take_action()
+
+    # agent = GenshinAgent()
+    # while True:
+    #     agent.take_action()
