@@ -211,7 +211,17 @@ def process_image(image):
     return grayscale_image
 
 
-def extract_damage_done(image):
+def extract_damage_done(show_image=False):
+    # Grab image
+    image = ImageGrab.grab(bbox=(110, 180, 180, 188))
+
+    # Show image
+    if show_image:
+        cv2.imshow('window', image)
+
+    # Turn image into a numpy array
+    image = np.array(image)
+
     # Get text
     result = ocr.ocr(image, det=False, cls=False)[0][0]
 
@@ -229,17 +239,8 @@ def extract_damage_done(image):
 
 def main():
     while True:
-        # Grab image
-        screen = ImageGrab.grab(bbox=(110, 180, 180, 188))
-
-        # Process image
-        # image = process_image(np.array(screen))
-
-        # Show image
-        # cv2.imshow('window', image)
-
         # Extract damage done from image
-        print(extract_damage_done(np.array(screen)))
+        print(extract_damage_done())
 
         # ord(q) == 113
         # if cv2.waitKey(1) == 113:
