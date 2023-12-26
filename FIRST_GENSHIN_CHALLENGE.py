@@ -1,29 +1,20 @@
 """
-- jak jest ta domena w mondstadt z "test runami reakcji", są w niej liczniki reakcji / damage'a. generalnie w genshinie nie ma za dużo takich miejsc z widocznymi cały czas licznikami. mógłbym zbudować skrypt minimalizujący czas przechodzenia tego "reaction tutoriala" z następującym inputem/outputem:
-	- input
-		- licznik reakcji w aktualnym epizodzie
-	- output
-		- akcja: zresetuj epizod
-		- a w s d
-		- e q
-		- LPM
-
-przeciwnicy w tych reaction tutorialach są (potwierdzone) w tych samych miejscach więc mogłoby się okazać, że tyle wystarczy by pobić mój wynik przynajmniej w jednej malutkiej części genshina (i mało przydatnej do zautomatyzowania), ale i tak byłby to zauważalny postęp ku "generalnym ai do zastąpienia ludzkich graczy".
-
-domena którą będę się zajmował to pierwsza domena z reakcjami gdzie testujemy vaporize z barbarą i xiangling.
+przeciwnicy w tych reaction tutorialach są (potwierdzone) w tych samych miejscach więc mogłoby się okazać, że tyle wystarczy by pobić mój osobisty wynik przynajmniej w jednej malutkiej części genshina (i mało przydatnej do zautomatyzowania), ale i tak byłby to zauważalny postęp ku "generalnym ai do zastąpienia ludzkich graczy".
 
 co do śledzonych liczników:
 - są dwa: reactions_done i dmg_done
 - na początku można przetestować śledzenie obydwu osobno w dwóch różnych treningach
 - później można spróbować zrobić np. jakieś równanie typu:
     reactions_done% * dmg_done%
-- może co każde 20 sekund gdzie nie podniósł maksymalizowanej wartości dostaje -1 punkt? albo co większą wartość cooldownu e + kilka sekund, bo chciałbym żeby na początku naucył się po prostu używania e na obydwu postaciach
+- może co każde 20 sekund gdzie nie podniósł maksymalizowanej wartości dostaje -1 punkt? albo co wartość cooldownu e  xg + 2s. w teamie z barbarą i xg używanie e na obydwu postaciach nie jest jedyną opcją by maksymalizować reward, więc nie powinienem oczekiwac że bot to zrobi.
 
 Vaporize Reactions Triggered: 0/15
 DMG Dealt to Monsters: 0/14000
 
 barbara - postać 1 (default)
 xiangling - postać 2
+
+w sumie sam `damage_done` nie wystarczy jako reward nawet by przejść tak prostą domenę xd. bo może np. zostać na xg i spamować e i ca. dalej byłoby ciekawie zobaczyć co z tego wyjdzie, ale na przyszłość można zrobić odczyt `reactions_done`.
 """
 from time import sleep, perf_counter
 import random

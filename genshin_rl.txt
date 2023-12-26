@@ -14,3 +14,5 @@ high-res. literally this game is designed so that its cheaper to hire humans
 to play it instead of creating AIs. Much much harder to navigate as an AI then
 Axie Infinity for example. I now wonder why Axie didn't fail sooner, as its
 complexity was pretty low.
+
+myślę sobie, że z tymi building blockami wyżej, część algorytmu robiącą dmg wokół pobliskich wrogów miałbym w znaczącej części za sobą, ale niestety ciężko byłoby się obyć bez wizualnych informacji (w kontekście general domain bota).
