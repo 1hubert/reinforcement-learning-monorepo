@@ -12,11 +12,16 @@ Vaporize Reactions Triggered: 0/15
 DMG Dealt to Monsters: 0/14000
 
 --------------------
+Things I'll need to implement at some point:
+- a way to track is_q_available
+- a way to track is_terminated (is the agent dead)
+
+--------------------
 Potential problems we may come accross:
 - what do we do about having diferent e/q abilities (and special abilities like neuvillette ca) for many different characters? hard-code everything? Should every character be a different agent, inheriting from an agent which only can move?
 - what state to use?
 - what reward to use?
-- 
+- what if the greedily-chosen action is not available (e/q/switch_character)?
 
 --------------------
 Potential approaches:
