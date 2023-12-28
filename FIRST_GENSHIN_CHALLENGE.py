@@ -15,6 +15,8 @@ barbara - postać 1 (default)
 xiangling - postać 2
 
 w sumie sam `damage_done` nie wystarczy jako reward nawet by przejść tak prostą domenę xd. bo może np. zostać na xg i spamować e i ca. dalej byłoby ciekawie zobaczyć co z tego wyjdzie, ale na przyszłość można zrobić odczyt `reactions_done`.
+
+How do we solve the problem of having diferent e abilities for many different characters?
 """
 from time import sleep, perf_counter
 import random
@@ -50,10 +52,12 @@ class GenshinAgent:
             self.switch_characters: 0
         }
         self.stats = {
+            # Barbara
             1: {
                 'e_cooldown': 32,
                 'e_casttime': 0.5
             },
+            # Xiangling
             2: {
                 'e_cooldown': 12,
                 'e_casttime': 0.5
