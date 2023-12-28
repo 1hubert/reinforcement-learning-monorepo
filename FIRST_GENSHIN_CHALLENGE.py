@@ -11,11 +11,6 @@ co do śledzonych liczników:
 Vaporize Reactions Triggered: 0/15
 DMG Dealt to Monsters: 0/14000
 
-barbara - postać 1 (default)
-xiangling - postać 2
-
-w sumie sam `damage_done` nie wystarczy jako reward nawet by przejść tak prostą domenę xd. bo może np. zostać na xg i spamować e i ca. dalej byłoby ciekawie zobaczyć co z tego wyjdzie, ale na przyszłość można zrobić odczyt `reactions_done`.
-
 How do we solve the problem of having diferent e abilities for many different characters?
 """
 from time import sleep, perf_counter
@@ -145,6 +140,7 @@ class GenshinAgent:
         self.basic_attack()
         self.charged_attack()
 
+
 def hard_reset_env(first_episode=False):
     """
     Basically quit domain, re-enter, run up the stairs and click 'f' near the key to start a new episode with same initial environment.
@@ -240,6 +236,7 @@ def extract_damage_done(show_image=False):
     except ValueError:  # Not a a valid int
         return False
 
+
 def extract_reactions_done(show_image=False):
     # Grab image
     image = ImageGrab.grab(bbox=(135, 165, 154, 178))  # ltrb
@@ -250,7 +247,6 @@ def extract_reactions_done(show_image=False):
     # Show image
     if show_image:
         cv2.imshow('window', image)
-
 
     # Get text
     result = ocr.ocr(image, det=False, cls=False)[0][0]
@@ -292,7 +288,6 @@ if __name__ == '__main__':
     pyautogui.click(*LOADING_SCREEN)
     # hard_reset_env(first_episode=True)
     main()
-
 
     # agent = GenshinAgent()
     # while True:
