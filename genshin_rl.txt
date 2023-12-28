@@ -1,5 +1,3 @@
-Genshin RL will be much harder than I originally anticipated, but it's possible to the extent I'd need (replacing me).
-
 How I could simplify?
 - instead of having a single press of keys like 'a', 'w', 's', 'd' as actions, I could record myself playing some 'building blocks' of rotations
 for example, in my neuvillette/nahida/raidenEM/dehya team, I could do the following actions:

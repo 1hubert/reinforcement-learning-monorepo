@@ -11,7 +11,21 @@ co do śledzonych liczników:
 Vaporize Reactions Triggered: 0/15
 DMG Dealt to Monsters: 0/14000
 
-How do we solve the problem of having diferent e abilities for many different characters?
+--------------------
+Potential problems we may come accross:
+- what do we do about having diferent e/q abilities (and special abilities like neuvillette ca) for many different characters? hard-code everything? Should every character be a different agent, inheriting from an agent which only can move?
+- what state to use?
+- what reward to use?
+- 
+
+--------------------
+Potential approaches:
+- seconds / half-seconds as state
+- rotation-based approach: estimate how much time an optimal rotation would take, then use (1, 2, ..., rotation_max_time) as state (cycle through it multiple times within one episode)
+- visual-input-based approach: learn to recognize enemies, walk up to them and beat them up
+- proximity-based approach: hack a way to get some data about x-y-z coordinates of your character and the enemies, lower the lowest proximity and beat the enemy up, rinse and repeat
+
+APPROACH 1: Use seconds (1, 2, ..., last_second) as state
 """
 from time import sleep, perf_counter
 import random
