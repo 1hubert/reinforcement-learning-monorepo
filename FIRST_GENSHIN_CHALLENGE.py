@@ -21,7 +21,7 @@ Potential problems we may come accross:
 - what do we do about having diferent e/q abilities (and special abilities like neuvillette ca) for many different characters? hard-code everything? Should every character be a different agent, inheriting from an agent which only can move?
 - what state to use?
 - what reward to use?
-- what if the greedily-chosen action is not available (e/q/switch_character)?
+- what if the greedily-chosen action is not available (e/q/switch_character)? --> i guess that you take the state-action pair with the second-highest value
 
 --------------------
 Potential approaches:
