@@ -32,11 +32,13 @@ Potential approaches:
 
 APPROACH 1:
 - Use seconds (1, 2, ..., last_second) as state
-- Limit agent to char1 only
+- Limit agent to char2 only
+- focus on `damage_done`, ignore `reactions_done`
 
 potentially next approach:
 - Use seconds (1, 2, ..., last_second) as state
 - Give agent the ability to change characters, but only as their very first action in an episode
+- focus on `damage_done`, ignore `reactions_done`
 """
 from time import sleep, perf_counter
 import random
@@ -254,7 +256,7 @@ class GenshinAgent:
         self.final_epsilon = final_epsilon
         self.qtable = np.zeros((self.state_size, self.action_size))
 
-    def get_action(self, obs: tuple[int, int, int]) -> int:
+    def get_action(self, state) -> int:
         """
         Returns the best action with probability (1-epsilon)
         otherwise a random action with probability epsilon to ensure exploration.
@@ -265,7 +267,7 @@ class GenshinAgent:
 
         # With p(1 - epsilon) act greedily (exploit)
         else:
-            return int(np.argmax(self.q_values[obs]))
+            return int(np.argmax(self.qtable[state]))
 
     def update(self, state, action, reward, new_state):
         """Update Q(s,a):= Q(s,a) + lr*[R(s,a) + discount_rate * max(Q(s',a') - Q(s, a)]"""
