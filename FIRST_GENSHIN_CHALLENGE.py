@@ -240,6 +240,22 @@ class GenshinEnvironment:
     def step(self, action):
         """
         return (next_state, reward, terminated, truncated)
+
+        each of those 4 individually is problematic.
+
+        solutions:
+        1) next_state
+            perf_counter()
+        2) reward
+            a synchronous function reading `damage_done` and saving it to some global variable:
+                option 1) store everything in one huge np.array
+                option 2) only store the newest state and overrite it constantly
+            then, read from that variable here
+        3) terminated
+            - i guess one "solution" is to just hardcode it to always be False until I find a reliable way to track it??
+            - i guess that whenever last x `damage_done` readings have an error both chars could be considered dead, but i want terminated=True whenever a SINGLE char dies, not all of them.
+        4) truncated
+            - well, i guess i could have a GenshinEnv variable called `start_time` and just each time `step` is called check if 90s have passed since then or nah
         """
         pass
 
