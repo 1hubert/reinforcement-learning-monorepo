@@ -313,7 +313,12 @@ class GenshinAgent:
             - self.qtable[state, action]
         )
 
-        return self.qtable[state, action] + self.learning_rate * delta
+        # print('--------------------------------------------')
+        # print(self.qtable)
+
+        self.qtable[state, action] = (
+            self.qtable[state, action] + self.learning_rate * delta
+        )
 
     def decay_epsilon(self):
         self.epsilon = max(
