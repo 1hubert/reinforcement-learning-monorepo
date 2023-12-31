@@ -29,6 +29,7 @@ Potential approaches:
 - rotation-based approach: estimate how much time an optimal rotation would take, then use (1, 2, ..., rotation_max_time) as state (cycle through it multiple times within one episode)
 - visual-input-based approach: learn to recognize enemies, walk up to them and beat them up
 - proximity-based approach: hack a way to get some data about x-y-z coordinates of your character and the enemies, lower the lowest proximity and beat the enemy up, rinse and repeat
+- maybe using things like `damage_done` or/combined with `reactions_done`... suboptimal? maybe just let's just give the agent +1 when we win, -1 when we die/run out of time and 0 on non-terminal states ????????? that'd make sense. 
 
 APPROACH 1:
 - Use seconds (1, 2, ..., last_second) as state
