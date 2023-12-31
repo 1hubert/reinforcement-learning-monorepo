@@ -29,7 +29,7 @@ Potential approaches:
 - rotation-based approach: estimate how much time an optimal rotation would take, then use (1, 2, ..., rotation_max_time) as state (cycle through it multiple times within one episode)
 - visual-input-based approach: learn to recognize enemies, walk up to them and beat them up
 - proximity-based approach: hack a way to get some data about x-y-z coordinates of your character and the enemies, lower the lowest proximity and beat the enemy up, rinse and repeat
-- maybe using things like `damage_done` or/combined with `reactions_done`... suboptimal? maybe just let's just give the agent +1 when we win, -1 when we die/run out of time and 0 on non-terminal states ????????? that'd make sense. 
+- maybe using things like `damage_done` or/combined with `reactions_done`... suboptimal? maybe just let's just give the agent +1 when we win, -1 when we die/run out of time and 0 on non-terminal states ????????? that'd make sense.
 - if i decided to go with `damage_done`+`reactions_done` when calculating reward, i could kind of simulate what i do: maximize `reactions_done` first, then maximize the remaining `damage_done` until you win. voila
 
 APPROACH 1:
@@ -60,7 +60,6 @@ START_DOMAIN = (570, 527)
 
 class GenshinEnvironment:
     def __init__(self):
-        # Constant attributes
         self.actions = {
             0: self.move_forward,
             1: self.move_backward,
@@ -85,7 +84,8 @@ class GenshinEnvironment:
             }
         }
 
-        # Variable attributes
+        # These attributes will be reseted each episode
+        self.start_time = None
         self.current_char = 1
         self.next_usage_times = {
             self.use_e: 0,
@@ -148,14 +148,14 @@ class GenshinEnvironment:
         # Keep track of cooldown (1s)
         self.next_usage_times[self.switch_characters] = perf_counter() + 1
 
-    def action_on_cooldown(self, action: int) -> bool:
+    def is_action_on_cooldown(self, action: int) -> bool:
         action_f = self.actions[action]
         next_usage_time = self.next_usage_times.get(action_f, 0)
-        return  next_usage_time > perf_counter()
+        return next_usage_time > perf_counter()
 
     def random_action(self) -> int:
         """Return the key of a random ready action."""
-        ready_actions = [a for a in self.actions if not self.action_on_cooldown(a)]
+        ready_actions = [a for a in self.actions if not self.is_action_on_cooldown(a)]
         return random.choice(ready_actions)
 
     def test_all_actions(self):
@@ -222,26 +222,30 @@ class GenshinEnvironment:
         for _ in range(3):
             sleep(1.1 + random.random())
             pyautogui.click(*LOADING_SCREEN)
-        sleep(0.1 + random.random() / 5)
+        sleep(1 + random.random() / 10)
 
         # Run up to the key (this cannot be randomized)
-        w_time_1 = random.uniform(0.5, 6)
-        w_time_2 = 7.4 - w_time_1
+        w_time_1 = random.uniform(2, 2.2)
+        w_time_2 = 7 - w_time_1
         with pyautogui.hold('w'):
             sleep(w_time_1)
             pyautogui.keyDown('shiftleft')
             pyautogui.keyUp('shiftleft')
             sleep(w_time_2)
+        sleep(0.1)
 
         # Start the domain!
         pyautogui.hotkey('f')
 
-        # Return the first "time"
-        return perf_counter()
+        # Start counting time
+        self.start_time = perf_counter()
+
+        # Return time spent in the trial
+        return 0
 
     def step(self, action):
         """
-        return (next_state, reward, terminated, truncated)
+        Execute given action and return (next_state, reward, terminated, truncated).
 
         each of those 4 individually is problematic.
 
@@ -256,10 +260,24 @@ class GenshinEnvironment:
         3) terminated
             - i guess one "solution" is to just hardcode it to always be False until I find a reliable way to track it??
             - i guess that whenever last x `damage_done` readings have an error both chars could be considered dead, but i want terminated=True whenever a SINGLE char dies, not all of them.
+            - seems like it needs an extra async function updating some global var like `TERMINATED`
         4) truncated
             - well, i guess i could have a GenshinEnv variable called `start_time` and just each time `step` is called check if 90s have passed since then or nah
         """
-        pass
+        # Execute action
+        self.actions[action]()
+
+        VICTORY_ROYALE = False  # TODO: write an async func for that??
+        reward = 1 if VICTORY_ROYALE else -1
+        terminated = False  # TODO: write an async func for that
+        truncated = self.start_time + 90 < perf_counter()
+
+        return (
+            round(perf_counter() - self.start_time),
+            reward,
+            terminated,
+            truncated
+        )
 
 class GenshinAgent:
     def __init__(self, state_size, action_size, learning_rate, discount_rate, initial_epsilon, epsilon_decay, final_epsilon):
@@ -420,7 +438,7 @@ if __name__ == '__main__':
             state = env.reset()  # t=0s
 
         # Change character to Xiangling
-        env.switch_characters()
+        # env.switch_characters()
 
         done = False
 
