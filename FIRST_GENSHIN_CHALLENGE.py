@@ -270,13 +270,13 @@ class GenshinEnvironment:
         VICTORY_ROYALE = False  # TODO: write an async func for that??
         reward = 1 if VICTORY_ROYALE else -1
         terminated = False  # TODO: write an async func for that
-        truncated = self.start_time + 90 < perf_counter()
-
+        next_state = round(perf_counter() - self.start_time)
+        
         return (
-            round(perf_counter() - self.start_time),
+            next_state,
             reward,
             terminated,
-            truncated
+            next_state > 89
         )
 
 class GenshinAgent:
