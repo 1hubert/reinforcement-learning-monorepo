@@ -271,7 +271,7 @@ class GenshinEnvironment:
         reward = 1 if VICTORY_ROYALE else -1
         terminated = False  # TODO: write an async func for that
         next_state = round(perf_counter() - self.start_time)
-        
+
         return (
             next_state,
             reward,
@@ -305,11 +305,13 @@ class GenshinAgent:
         else:
             return int(np.argmax(self.qtable[state]))
 
-    def update(self, state, action, reward, new_state):
+    def update(self, state, action, reward, new_state, terminated):
         """Update Q(s,a):= Q(s,a) + lr*[R(s,a) + discount_rate * max(Q(s',a') - Q(s, a)]"""
+        future_q_value = (not terminated) * np.max(self.qtable[new_state])
+
         delta = (
             reward
-            + self.discount_rate * np.max(self.qtable[new_state, :])
+            + self.discount_rate * future_q_value
             - self.qtable[state, action]
         )
 
@@ -452,7 +454,7 @@ if __name__ == '__main__':
             action = agent.get_action(state)
             next_state, reward, terminated, truncated = env.step(action)
 
-            agent.update(state, action, reward, next_state)
+            agent.update(state, action, reward, next_state, terminated)
 
             # terminated - either xiangling or barbara is dead
             # truncated - the trial has run out of time
