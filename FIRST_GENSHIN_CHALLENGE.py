@@ -268,8 +268,9 @@ class GenshinEnvironment:
         self.actions[action]()
 
         VICTORY_ROYALE = False  # TODO: write an async func for that??
+        CHARACTER_DEAD = False  # TODO: write an async func for that
         reward = 1 if VICTORY_ROYALE else -1
-        terminated = False  # TODO: write an async func for that
+        terminated = CHARACTER_DEAD or VICTORY_ROYALE
         next_state = round(perf_counter() - self.start_time)
 
         return (
@@ -456,7 +457,7 @@ if __name__ == '__main__':
 
             agent.update(state, action, reward, next_state, terminated)
 
-            # terminated - either xiangling or barbara is dead
+            # terminated - either xiangling or barbara is dead OR we won
             # truncated - the trial has run out of time
             done = terminated or truncated
             state = next_state
