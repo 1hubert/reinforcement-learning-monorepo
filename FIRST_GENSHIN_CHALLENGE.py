@@ -95,7 +95,7 @@ class GenshinEnvironment:
             self.use_e: 0,
             self.switch_characters: 0
         }
-        self.char_health = 'green'  # green/red/dead
+        self.character_dead = False
 
     def move_forward(self):
         logging.debug('action: moving forward')
@@ -190,13 +190,6 @@ class GenshinEnvironment:
             while pyautogui.pixel(*LOADING_SCREEN) == loading_screen_color:
                 sleep(0.5)
 
-        # Reset relevant attributes
-        self.current_char = 1
-        self.next_usage_times = {
-            self.use_e: 0,
-            self.switch_characters: 0
-        }
-
         if first_episode:
             # Run up to the domain
             with pyautogui.hold('w'):
@@ -239,6 +232,16 @@ class GenshinEnvironment:
             sleep(w_time_2)
         sleep(0.1)
 
+        # Reset relevant attributes
+        self.current_char = 1
+        self.next_usage_times = {
+            self.use_e: 0,
+            self.switch_characters: 0
+        }
+        self.character_dead = False
+
+        # TODO: Start an asynchronous proces of `update_terminal_states`
+
         # Start the domain!
         pyautogui.hotkey('f')
 
@@ -273,9 +276,8 @@ class GenshinEnvironment:
         self.actions[action]()
 
         VICTORY_ROYALE = False  # TODO: write an async func for that??
-        CHARACTER_DEAD = False  # TODO: write an async func for that
         reward = 1 if VICTORY_ROYALE else -1
-        terminated = CHARACTER_DEAD or VICTORY_ROYALE
+        terminated = self.character_dead or VICTORY_ROYALE
         next_state = round(perf_counter() - self.start_time)
 
         return (
@@ -310,19 +312,13 @@ class GenshinEnvironment:
 
         healthbar_color = HEALTHBAR_GREEN
         while True:
-            print(self.char_health)
-            c = pyautogui.pixel(*LEFT_END_HEALTHBAR)
-
             if not pyautogui.pixelMatchesColor(*LEFT_END_HEALTHBAR, healthbar_color, tolerance=41):
-                if self.char_health == 'red':
-                    self.char_health = 'dead'
-                    print('we dead :(')
-                    print(f'c: {c}')
+                if healthbar_color == HEALTHBAR_RED:
+                    self.character_dead = True
+                    logging.debug(f'character dead')
                     break
 
                 healthbar_color = HEALTHBAR_RED
-                self.char_health = 'red'
-
 
 
 class GenshinAgent:
