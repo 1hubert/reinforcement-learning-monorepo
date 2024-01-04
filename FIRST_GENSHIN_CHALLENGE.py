@@ -88,15 +88,6 @@ class GenshinEnvironment:
             }
         }
 
-        # These attributes will be reseted each episode
-        self.start_time = None
-        self.current_char = 1
-        self.next_usage_times = {
-            self.use_e: 0,
-            self.switch_characters: 0
-        }
-        self.character_dead = False
-
     def move_forward(self):
         logging.debug('action: moving forward')
         with pyautogui.hold('w'):
