@@ -41,6 +41,10 @@ potentially next approach:
 - Use seconds (1, 2, ..., last_second) as state
 - Give agent the ability to change characters, but only as their very first action in an episode
 - focus on `damage_done`, ignore `reactions_done`
+
+i just realized that not all people have their windows bar on top so i'd have to:
+a) subtract 40 on all Y axes
+b) have a variable like WINDOWS_BAR_BOTTOM=True based on which I'd adjust y values. the disadvantage of this is if the var would be in the main python file i'd i couldn't just `git add .` before every commit
 """
 from time import sleep, perf_counter
 import random
@@ -91,6 +95,7 @@ class GenshinEnvironment:
             self.use_e: 0,
             self.switch_characters: 0
         }
+        self.char_health = 'green'  # green/red/dead
 
     def move_forward(self):
         logging.debug('action: moving forward')
@@ -280,8 +285,7 @@ class GenshinEnvironment:
             next_state > 89
         )
 
-    @staticmethod
-    def update_terminal_states():
+    def update_terminal_states(self):
         """Update `VICTORY_ROYALE` and `CHARACTER_DEAD`.
 
         approach 1: ss+ocr
@@ -300,7 +304,26 @@ class GenshinEnvironment:
         - potential location for VICTORY_ROYALE
             - maybe 2 pixels each on one button (exit / try again)
         """
-        pass
+        LEFT_END_HEALTHBAR = (271, 528)
+        HEALTHBAR_GREEN = (150, 215, 34)
+        HEALTHBAR_RED = (255, 90, 90)
+
+        healthbar_color = HEALTHBAR_GREEN
+        while True:
+            print(self.char_health)
+            c = pyautogui.pixel(*LEFT_END_HEALTHBAR)
+
+            if not pyautogui.pixelMatchesColor(*LEFT_END_HEALTHBAR, healthbar_color, tolerance=41):
+                if self.char_health == 'red':
+                    self.char_health = 'dead'
+                    print('we dead :(')
+                    print(f'c: {c}')
+                    break
+
+                healthbar_color = HEALTHBAR_RED
+                self.char_health = 'red'
+
+
 
 class GenshinAgent:
     def __init__(self, state_size, action_size, learning_rate, discount_rate, initial_epsilon, epsilon_decay, final_epsilon):
@@ -451,6 +474,8 @@ if __name__ == '__main__':
     pyautogui.click(*LOADING_SCREEN)
 
     env = GenshinEnvironment()
+    env.update_terminal_states()
+    exit()
     agent = GenshinAgent(
         state_size=state_size,
         action_size=action_size,
