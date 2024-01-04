@@ -280,6 +280,28 @@ class GenshinEnvironment:
             next_state > 89
         )
 
+    @staticmethod
+    def update_terminal_states():
+        """Update `VICTORY_ROYALE` and `CHARACTER_DEAD`.
+
+        approach 1: ss+ocr
+        one function for:
+        - ss
+        - cutting relevant parts
+            - health bar
+            - part of the screen that will say "you won"
+        - ocr on health bar
+        - ocr on "you won"
+
+        approach 2: pyautogui.pixel
+        - potential locations for CHAR_DEAD
+            - green pixel to the left of health bar
+            - gray icon of xiangling/barbara
+        - potential location for VICTORY_ROYALE
+            - maybe 2 pixels each on one button (exit / try again)
+        """
+        pass
+
 class GenshinAgent:
     def __init__(self, state_size, action_size, learning_rate, discount_rate, initial_epsilon, epsilon_decay, final_epsilon):
         """Initialize a RL agent with an empty dict of state-action values (q_values), a learning rate and an epsilon.
