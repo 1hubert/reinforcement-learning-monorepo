@@ -16,19 +16,20 @@ class GenshinEnv:
             time.sleep(0.2)
 
 class TestThreading:
-    def __init__(self, interval=1):
-        self.interval = interval
+    def __init__(self):
+        self.a = 0
 
-        thread = threading.Thread(target=self.run, args=())
-        thread.daemon = True
-        thread.start()
+        self.thread = threading.Thread(target=self.run, args=())
+        self.thread.daemon = True
+        self.thread.start()
 
     def run(self):
         while True:
             # More statements comes here
-            print(f'{time.time()}: Running in the background')
+            self.a += 1
+            print(f'{time.time()}: Running in the background (a={self.a})')
 
-            time.sleep(self.interval)
+            time.sleep(1.01)
 
 if __name__ == '__main__':
     tr = TestThreading()
@@ -37,6 +38,10 @@ if __name__ == '__main__':
 
     time.sleep(2)
     print(f'{time.time()}: Second output')
+
+    tr2 = TestThreading()
+
+    time.sleep(10)
 
     # env = GenshinEnv()
     # env.check_color()
