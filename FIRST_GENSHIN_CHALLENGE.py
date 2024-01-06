@@ -291,8 +291,7 @@ def update_terminal_states(death_event, victory_event):
         if not pyautogui.pixelMatchesColor(*LEFT_END_HEALTHBAR, healthbar_color, tolerance=41):
             if healthbar_color == HEALTHBAR_RED:
                 death_event.set()
-                # logging.debug('character dead')
-                print('character dead')
+                logging.info('character dead :(')
                 break
 
             healthbar_color = HEALTHBAR_RED
@@ -306,7 +305,7 @@ def update_terminal_states(death_event, victory_event):
             *LETTER_D, WHITE)):
 
             victory_event.set()
-            print('VICTORY DETECTED')
+            logging.info('VICTORY DETECTED :D')
             break
 
 class GenshinAgent:
@@ -431,10 +430,11 @@ def main():
 
 
 if __name__ == '__main__':
-    # logging.basicConfig(
-    #     level=logging.DEBUG,
-    #     format='[%(levelname)s] %(asctime)s - %(message)s'
-    # )
+    logging.basicConfig(
+        level=logging.DEBUG,
+        format='[%(levelname)s] %(asctime)s - %(message)s',
+        force=True
+    )
 
     ocr = PaddleOCR(
         lang='en',
@@ -473,9 +473,6 @@ if __name__ == '__main__':
             state = env.reset(first_episode=True)  # t=0s
         else:
             state = env.reset()  # t=0s
-
-        # Change character to Xiangling
-        # env.switch_characters()
 
         done = False
 
