@@ -1,26 +1,16 @@
 """
 przeciwnicy w tych reaction tutorialach są (potwierdzone) w tych samych miejscach więc mogłoby się okazać, że tyle wystarczy by pobić mój osobisty wynik przynajmniej w jednej malutkiej części genshina (i mało przydatnej do zautomatyzowania), ale i tak byłby to zauważalny postęp ku "generalnym ai do zastąpienia ludzkich graczy".
 
-co do śledzonych liczników:
-- są dwa: reactions_done i dmg_done
-- na początku można przetestować śledzenie obydwu osobno w dwóch różnych treningach
-- później można spróbować zrobić np. jakieś równanie typu:
-    reactions_done% * dmg_done%
-- może co każde 20 sekund gdzie nie podniósł maksymalizowanej wartości dostaje -1 punkt? albo co wartość cooldownu e  xg + 2s. w teamie z barbarą i xg używanie e na obydwu postaciach nie jest jedyną opcją by maksymalizować reward, więc nie powinienem oczekiwac że bot to zrobi.
-
 Vaporize Reactions Triggered: 0/15
 DMG Dealt to Monsters: 0/14000
 
 --------------------
 Things I'll need to implement at some point:
 - a way to track is_q_available
-- a way to track is_terminated (is the agent dead)
 
 --------------------
 Potential problems we may come accross:
 - what do we do about having diferent e/q abilities (and special abilities like neuvillette ca) for many different characters? hard-code everything? Should every character be a different agent, inheriting from an agent which only can move?
-- what state to use?
-- what reward to use?
 - what if the greedily-chosen action is not available (e/q/switch_character)? --> i guess that you take the state-action pair with the second-highest value
 
 --------------------
@@ -29,7 +19,6 @@ Potential approaches:
 - rotation-based approach: estimate how much time an optimal rotation would take, then use (1, 2, ..., rotation_max_time) as state (cycle through it multiple times within one episode)
 - visual-input-based approach: learn to recognize enemies, walk up to them and beat them up
 - proximity-based approach: hack a way to get some data about x-y-z coordinates of your character and the enemies, lower the lowest proximity and beat the enemy up, rinse and repeat
-- maybe using things like `damage_done` or/combined with `reactions_done`... suboptimal? maybe just let's just give the agent +1 when we win, -1 when we die/run out of time and 0 on non-terminal states ????????? that'd make sense.
 - if i decided to go with `damage_done`+`reactions_done` when calculating reward, i could kind of simulate what i do: maximize `reactions_done` first, then maximize the remaining `damage_done` until you win. voila
 
 APPROACH 1:
