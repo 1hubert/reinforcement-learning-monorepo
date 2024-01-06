@@ -187,6 +187,10 @@ class GenshinEnvironment:
             with pyautogui.hold('w'):
                 sleep(2 + (random.random() / 5))
         else:
+            # Terminate child process and reclaim resources
+            self.update_terminal_states_process.terminate()
+            self.update_terminal_states_process.join()
+
             # Quit domain
             pyautogui.hotkey('esc')
             sleep(random.random())
