@@ -259,13 +259,13 @@ class GenshinEnvironment:
         reward = 1 if self.victory_event.is_set() else -1
         terminated = self.death_event.is_set() or self.victory_event.is_set()
         time_elapsed = perf_counter() - self.start_time
-        next_state = round(time_elapsed) if time_elapsed < 90
+        next_state = round(time_elapsed) if time_elapsed <= 89.5 else 89
 
         return (
             next_state,
             reward,
             terminated,
-            next_state > 89
+            time_elapsed > 89.5
         )
 
 def update_terminal_states(death_event, victory_event):
@@ -427,10 +427,10 @@ def main():
 
 
 if __name__ == '__main__':
-    logging.basicConfig(
-        level=logging.DEBUG,
-        format='[%(levelname)s] %(asctime)s - %(message)s'
-    )
+    # logging.basicConfig(
+    #     level=logging.DEBUG,
+    #     format='[%(levelname)s] %(asctime)s - %(message)s'
+    # )
 
     ocr = PaddleOCR(
         lang='en',
