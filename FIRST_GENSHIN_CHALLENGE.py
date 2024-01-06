@@ -49,6 +49,7 @@ b) have a variable like WINDOWS_BAR_BOTTOM=True based on which I'd adjust y valu
 from time import sleep, perf_counter
 import random
 import logging
+import multiprocessing
 
 import numpy as np
 from PIL import ImageGrab
@@ -229,9 +230,15 @@ class GenshinEnvironment:
             self.use_e: 0,
             self.switch_characters: 0
         }
-        self.character_dead = False
 
-        # TODO: Start an asynchronous proces of `update_terminal_states`
+        # Start a daemon process checking if a terminal state has been encountered
+        self.death_event = multiprocessing.Event()
+        self.victory_event = multiprocessing.Event()
+        self.update_terminal_states_process = multiprocessing.Process(
+            target=update_terminal_states,
+            args=(self.death_event, self.victory_event)
+        )
+        self.update_terminal_states_process.start()
 
         # Start the domain!
         pyautogui.hotkey('f')
@@ -245,31 +252,14 @@ class GenshinEnvironment:
     def step(self, action):
         """
         Execute given action and return (next_state, reward, terminated, truncated).
-
-        each of those 4 individually is problematic.
-
-        solutions:
-        1) next_state
-            perf_counter()
-        2) reward
-            a synchronous function reading `damage_done` and saving it to some global variable:
-                option 1) store everything in one huge np.array
-                option 2) only store the newest state and overrite it constantly
-            then, read from that variable here
-        3) terminated
-            - i guess one "solution" is to just hardcode it to always be False until I find a reliable way to track it??
-            - i guess that whenever last x `damage_done` readings have an error both chars could be considered dead, but i want terminated=True whenever a SINGLE char dies, not all of them.
-            - seems like it needs an extra async function updating some global var like `TERMINATED`
-        4) truncated
-            - well, i guess i could have a GenshinEnv variable called `start_time` and just each time `step` is called check if 90s have passed since then or nah
         """
         # Execute action
         self.actions[action]()
 
-        VICTORY_ROYALE = False  # TODO: write an async func for that??
-        reward = 1 if VICTORY_ROYALE else -1
-        terminated = self.character_dead or VICTORY_ROYALE
-        next_state = round(perf_counter() - self.start_time)
+        reward = 1 if self.victory_event.is_set() else -1
+        terminated = self.death_event.is_set() or self.victory_event.is_set()
+        time_elapsed = perf_counter() - self.start_time
+        next_state = round(time_elapsed) if time_elapsed < 90
 
         return (
             next_state,
@@ -278,39 +268,42 @@ class GenshinEnvironment:
             next_state > 89
         )
 
-    def update_terminal_states(self):
-        """Update `VICTORY_ROYALE` and `CHARACTER_DEAD`.
+def update_terminal_states(death_event, victory_event):
+    """Check if a terminal state has been encountered in a loop. Set a matching event and break in case a state has been recognized."""
+    # Healthbar-related
+    LEFT_END_HEALTHBAR = (271, 528)
+    HEALTHBAR_GREEN = (150, 215, 34)
+    HEALTHBAR_RED = (255, 90, 90)
 
-        approach 1: ss+ocr
-        one function for:
-        - ss
-        - cutting relevant parts
-            - health bar
-            - part of the screen that will say "you won"
-        - ocr on health bar
-        - ocr on "you won"
+    # "Challenge Completed"-related
+    LETTER_C_1 = (182, 279)
+    LETTER_C_2 = (320, 279)
+    LETTER_D = (454, 278)
+    WHITE = (255, 255, 255)
 
-        approach 2: pyautogui.pixel
-        - potential locations for CHAR_DEAD
-            - green pixel to the left of health bar
-            - gray icon of xiangling/barbara
-        - potential location for VICTORY_ROYALE
-            - maybe 2 pixels each on one button (exit / try again)
-        """
-        LEFT_END_HEALTHBAR = (271, 528)
-        HEALTHBAR_GREEN = (150, 215, 34)
-        HEALTHBAR_RED = (255, 90, 90)
+    healthbar_color = HEALTHBAR_GREEN
+    while True:
+        # Check healthbar
+        if not pyautogui.pixelMatchesColor(*LEFT_END_HEALTHBAR, healthbar_color, tolerance=41):
+            if healthbar_color == HEALTHBAR_RED:
+                death_event.set()
+                # logging.debug('character dead')
+                print('character dead')
+                break
 
-        healthbar_color = HEALTHBAR_GREEN
-        while True:
-            if not pyautogui.pixelMatchesColor(*LEFT_END_HEALTHBAR, healthbar_color, tolerance=41):
-                if healthbar_color == HEALTHBAR_RED:
-                    self.character_dead = True
-                    logging.debug(f'character dead')
-                    break
+            healthbar_color = HEALTHBAR_RED
 
-                healthbar_color = HEALTHBAR_RED
+        # Check victory
+        if (pyautogui.pixelMatchesColor(
+            *LETTER_C_1, WHITE) and
+            pyautogui.pixelMatchesColor(
+            *LETTER_C_2, WHITE) and
+            pyautogui.pixelMatchesColor(
+            *LETTER_D, WHITE)):
 
+            victory_event.set()
+            print('VICTORY DETECTED')
+            break
 
 class GenshinAgent:
     def __init__(self, state_size, action_size, learning_rate, discount_rate, initial_epsilon, epsilon_decay, final_epsilon):
@@ -348,8 +341,8 @@ class GenshinAgent:
             - self.qtable[state, action]
         )
 
-        # print('--------------------------------------------')
-        # print(self.qtable)
+        print('--------------------------------------------')
+        print(self.qtable)
 
         self.qtable[state, action] = (
             self.qtable[state, action] + self.learning_rate * delta
@@ -461,8 +454,6 @@ if __name__ == '__main__':
     pyautogui.click(*LOADING_SCREEN)
 
     env = GenshinEnvironment()
-    env.update_terminal_states()
-    exit()
     agent = GenshinAgent(
         state_size=state_size,
         action_size=action_size,
