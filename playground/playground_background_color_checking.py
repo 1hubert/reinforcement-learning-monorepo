@@ -1,52 +1,46 @@
 """How do I make the `check_color` method run in the background?"""
 
 import time
-import threading
+import multiprocessing
+import queue
 
-from playground_victory_detection import check_victory
+import pyautogui
 
-class GenshinEnv:
-    def run_left(self):
-        print('running left...')
+def check_color(queue):
+    LOC = (50, 50)
+    WHITE = (255, 255, 255)
 
-    @staticmethod
-    def check_color():
-        while True:
-            print('checking color')
-            time.sleep(0.2)
+    while True:
+        time.sleep(0.2)
+        if pyautogui.pixelMatchesColor(*LOC, WHITE):
+            print('White detected, putting True to queue')
+            queue.put(True)
+            break
+        else:
+            print('not detected')
 
-class TestThreading:
+class PixelChecker:
     def __init__(self):
-        self.a = 0
+        self.reset()
 
-        self.thread = threading.Thread(target=self.run, args=())
-        self.thread.daemon = True
-        self.thread.start()
+    def reset(self):
+        self.queue = multiprocessing.Queue()
 
-    def run(self):
-        while True:
-            # More statements comes here
-            self.a += 1
-            print(f'{time.time()}: Running in the background (a={self.a})')
+        self.color_check_process = multiprocessing.Process(
+            target=check_color,
+            args=(self.queue,)
+        )
+        self.color_check_process.start()
 
-            time.sleep(1.01)
+    def step(self):
+        try:
+            if self.queue.get(block=False) is True:
+                print('step: White detected!')
+        except queue.Empty:
+            print('step: white not detected')
 
 if __name__ == '__main__':
-    tr = TestThreading()
-    time.sleep(1)
-    print(f'{time.time()}: First output')
-
-    time.sleep(2)
-    print(f'{time.time()}: Second output')
-
-    tr2 = TestThreading()
-
-    time.sleep(10)
-
-    # env = GenshinEnv()
-    # env.check_color()
-    # env.run_left()
-    # env.run_left()
-    # env.run_left()
-    # env.run_left()
-    # env.run_left()
+    pc = PixelChecker()
+    while True:
+        time.sleep(0.5)
+        pc.step()
