@@ -61,9 +61,9 @@ class GenshinEnvironment:
             3: self.move_right,
             4: self.basic_attack,
             5: self.charged_attack,
-            6: self.use_e,
+            6: self.switch_characters,
+            7: self.use_e,
             # 7: self.use_q,
-            # 8: self.switch_characters,
         }
         self.stats = {
             # Barbara
@@ -111,16 +111,6 @@ class GenshinEnvironment:
         # Do nothing during cast time
         sleep(0.76)
 
-    def use_e(self):
-        logging.debug('action: using e')
-        pyautogui.hotkey('e')
-
-        # Do nothing during cast time
-        sleep(self.stats[self.current_char]['e_casttime'])
-
-        # Keep track of cooldown
-        self.next_usage_times[self.use_e] = perf_counter() + self.stats[self.current_char]['e_cooldown']
-
     def switch_characters(self):
         if self.current_char == 1:
             logging.debug('action: switching chars 1->2')
@@ -134,9 +124,26 @@ class GenshinEnvironment:
         # Keep track of cooldown (1s)
         self.next_usage_times[self.switch_characters] = perf_counter() + 1
 
+    def use_e(self):
+        logging.debug('action: using e')
+        pyautogui.hotkey('e')
+
+        # Do nothing during cast time
+        sleep(self.stats[self.current_char]['e_casttime'])
+
+        # Keep track of cooldown
+        self.next_usage_times[f'use_e{self.current_char}'] = (
+            perf_counter()
+            + self.stats[self.current_char]['e_cooldown']
+        )
+
     def is_action_on_cooldown(self, action: int) -> bool:
         action_f = self.actions[action]
-        next_usage_time = self.next_usage_times.get(action_f, 0)
+        if action_f == 7:  # e
+            next_usage_time = self.next_usage_times.get(
+                f'use_e{self.current_char}', 0)
+        else:
+            next_usage_time = self.next_usage_times.get(action_f, 0)
         return next_usage_time > perf_counter()
 
     def random_action(self) -> int:
@@ -149,11 +156,10 @@ class GenshinEnvironment:
         self.move_backward()
         self.move_left()
         self.move_right()
-        self.use_e()
-        self.use_q()
-        self.switch_characters()
         self.basic_attack()
         self.charged_attack()
+        self.switch_characters()
+        self.use_e()
 
     def reset(self, first_episode=False):
         """
@@ -220,7 +226,8 @@ class GenshinEnvironment:
         # Reset relevant attributes
         self.current_char = 1
         self.next_usage_times = {
-            self.use_e: 0,
+            'use_e1': 0,
+            'use_e2': 0,
             self.switch_characters: 0
         }
 
@@ -239,7 +246,7 @@ class GenshinEnvironment:
         # Start counting time
         self.start_time = perf_counter()
 
-        # Return time spent in the trial
+        # Return time elapsed
         return 0
 
     def step(self, action):
@@ -439,8 +446,8 @@ if __name__ == '__main__':
     final_epsilon = 0.1
 
     # sizes
-    state_size = 90  # 90s?
-    action_size = 7  # no switch character / q
+    state_size = 90  # 90s
+    action_size = 8  # no q
 
     # -----------------------------------------------------
 
