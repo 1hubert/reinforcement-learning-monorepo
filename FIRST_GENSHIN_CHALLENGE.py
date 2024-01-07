@@ -46,6 +46,8 @@ import cv2
 from paddleocr import PaddleOCR
 import pyautogui
 
+SAVE_FILENAME = 'next_episode+qtable.npy'
+
 LOADING_SCREEN = (502, 338)
 EXIT_DOMAIN_BUTTON = (380, 380)
 SELECT_TRIAL_VAPORIZE = (152, 128)
@@ -305,7 +307,7 @@ def update_terminal_states(death_event, victory_event):
             break
 
 class GenshinAgent:
-    def __init__(self, state_size, action_size, learning_rate, discount_rate, initial_epsilon, epsilon_decay, final_epsilon):
+    def __init__(self, state_size, action_size, learning_rate, discount_rate, initial_epsilon, epsilon_decay, final_epsilon, qtable):
         """Initialize a RL agent with an empty dict of state-action values (q_values), a learning rate and an epsilon.
         """
         self.state_size = state_size
@@ -315,7 +317,7 @@ class GenshinAgent:
         self.epsilon = initial_epsilon
         self.epsilon_decay = epsilon_decay
         self.final_epsilon = final_epsilon
-        self.qtable = np.zeros((self.state_size, self.action_size))
+        self.qtable = qtable
 
     def get_action(self, state) -> int:
         """
@@ -449,9 +451,17 @@ if __name__ == '__main__':
     state_size = 90  # 90s
     action_size = 8  # no q
 
-    # -----------------------------------------------------
-
-    pyautogui.click(*LOADING_SCREEN)
+    # Try loading qmatrix and next_episode from file,
+    # if the file doesn't exist, use defualt values
+    try:
+        loaded = np.load('./next_episode+qtable.npy', allow_pickle=True)
+        next_episode = loaded[0]
+        qtable = loaded[1]
+        logging.info(f'resuming training... next episode: {next_episode}')
+    except FileNotFoundError:
+        next_episode = 0
+        qtable = np.zeros((state_size, action_size))
+        logging.info('beginning a new training...')
 
     env = GenshinEnvironment()
     agent = GenshinAgent(
@@ -461,11 +471,16 @@ if __name__ == '__main__':
         discount_rate=discount_rate,
         initial_epsilon=initial_epsilon,
         epsilon_decay=epsilon_decay,
-        final_epsilon=final_epsilon
+        final_epsilon=final_epsilon,
+        qtable=qtable
     )
 
-    for episode in range(n_episodes):
-        if episode == 0:  # resume_info.next_episode
+    # -----------------------------------------------------
+
+    pyautogui.click(*LOADING_SCREEN)
+
+    for episode in range(next_episode, n_episodes):
+        if episode == next_episode:
             state = env.reset(first_episode=True)  # t=0s
         else:
             state = env.reset()  # t=0s
@@ -485,3 +500,11 @@ if __name__ == '__main__':
             state = next_state
 
         agent.decay_epsilon()
+
+        # Save training to file
+        logging.info(f'saving training as of episode {episode} to {SAVE_FILENAME}...')
+        obj = np.empty(2, dtype='object')
+        obj[0] = episode + 1
+        obj[1] = agent.qtable
+        np.save('./next_episode+qmatrix.npy', obj)
+        logging.info('training saved!')
