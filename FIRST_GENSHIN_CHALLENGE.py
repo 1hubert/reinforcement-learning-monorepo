@@ -454,7 +454,7 @@ if __name__ == '__main__':
     # Try loading qmatrix and next_episode from file,
     # if the file doesn't exist, use defualt values
     try:
-        loaded = np.load('./next_episode+qtable.npy', allow_pickle=True)
+        loaded = np.load(SAVE_FILENAME, allow_pickle=True)
         next_episode = loaded[0]
         qtable = loaded[1]
         logging.info(f'resuming training... next episode: {next_episode}')
@@ -506,5 +506,5 @@ if __name__ == '__main__':
         obj = np.empty(2, dtype='object')
         obj[0] = episode + 1
         obj[1] = agent.qtable
-        np.save('./next_episode+qmatrix.npy', obj)
+        np.save(SAVE_FILENAME, obj)
         logging.info('training saved!')
