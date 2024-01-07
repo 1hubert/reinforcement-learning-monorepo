@@ -17,20 +17,20 @@ q_matrix[1, 2] = 420
 q_matrix[2, 5] = 420
 q_matrix[3,:] = 1
 
-def save(q_matrix):
-    memmap = np.memmap('./newfile.dat', dtype='float64', mode='w+', shape=(90, 7))
-
-    memmap[:] = q_matrix[:]
-
-    print(memmap)
-    # Write any changes in the array to the file on disk.
-    memmap.flush()
-
+def save(last_episode, q_matrix):
+    obj = np.empty(2, dtype='object')
+    obj[0] = last_episode + 1
+    obj[1] = q_matrix
+    np.save('./next_episode+qmatrix.npy', obj)
     print('saved!')
 
 def load_and_print():
-    new_memmap = np.memmap('./newfile.dat', dtype='float64', mode='r', shape=(90, 7))
-    print(new_memmap)
+    loaded = np.load('./next_episode+qmatrix.npy', allow_pickle=True)
+    print(f'next_episode: {loaded[0]}')
+    print(f'next_episode type: {type(loaded[0])}')
+    print()
+    print(f'qmatrix: {loaded[1]}')
+    print(f'qmatrix type: {type(loaded[1])}')
 
-save(q_matrix)
-# load_and_print()
+# save(10, q_matrix)
+load_and_print()
