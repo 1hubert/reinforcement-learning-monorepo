@@ -1,3 +1,6 @@
+# Saved numpy objects
+*.npy
+
 # a folder for tinkering with stuff
 # playground/
 
