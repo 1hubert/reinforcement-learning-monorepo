@@ -434,10 +434,10 @@ if __name__ == '__main__':
         force=True
     )
 
-    ocr = PaddleOCR(
-        lang='en',
-        rec_char_dict_path='./allowed_chars.txt'
-    )
+    # ocr = PaddleOCR(
+    #     lang='en',
+    #     rec_char_dict_path='./allowed_chars.txt'
+    # )
 
     # hyerparameters
     learning_rate = 0.01
