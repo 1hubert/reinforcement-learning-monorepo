@@ -57,24 +57,24 @@ START_DOMAIN = (570, 527)
 class GenshinEnvironment:
     def __init__(self):
         self.actions = {
-            0: self.move_forward,
-            1: self.move_backward,
-            2: self.move_left,
-            3: self.move_right,
-            4: self.basic_attack,
-            5: self.charged_attack,
-            6: self.switch_characters,
-            7: self.use_e,
+            0: self.charged_attack,
+            1: self.use_e,
+            2: self.switch_characters,
+            # 0: self.move_forward,
+            # 1: self.move_backward,
+            # 2: self.move_left,
+            # 3: self.move_right,
+            # 4: self.basic_attack,
             # 7: self.use_q,
         }
         self.stats = {
             # Barbara
-            1: {
+            0: {
                 'e_cooldown': 32,
                 'e_casttime': 0.5
             },
             # Xiangling
-            2: {
+            1: {
                 'e_cooldown': 12,
                 'e_casttime': 0.5
             }
@@ -105,29 +105,13 @@ class GenshinEnvironment:
         pyautogui.click()
 
     def charged_attack(self):
-        logging.debug('action: using charged attack')
+        logging.debug(f'action: using charged attack (char={self.current_char})')
         pyautogui.mouseDown()
         sleep(0.24)
         pyautogui.mouseUp()
 
-        # Do nothing during cast time
-        sleep(0.76)
-
-    def switch_characters(self):
-        if self.current_char == 1:
-            logging.debug('action: switching chars 1->2')
-            pyautogui.hotkey('2')
-            self.current_char = 2
-        else:
-            logging.debug('action: switching chars 2->1')
-            pyautogui.hotkey('1')
-            self.current_char = 1
-
-        # Keep track of cooldown (1s)
-        self.next_usage_times[self.switch_characters] = perf_counter() + 1
-
     def use_e(self):
-        logging.debug('action: using e')
+        logging.debug(f'action: using e (char={self.current_char})')
         pyautogui.hotkey('e')
 
         # Do nothing during cast time
@@ -139,29 +123,36 @@ class GenshinEnvironment:
             + self.stats[self.current_char]['e_cooldown']
         )
 
+    def switch_characters(self):
+        if self.current_char == 0:
+            logging.debug('action: switching chars 0->1')
+            pyautogui.hotkey('2')
+            self.current_char = 1
+        else:
+            logging.debug('action: switching chars 1->0')
+            pyautogui.hotkey('1')
+            self.current_char = 0
+
+        # Keep track of cooldown (3s so that there's no switch spam)
+        self.next_usage_times[self.switch_characters] = perf_counter() + 3
+
     def is_action_on_cooldown(self, action: int) -> bool:
-        action_f = self.actions[action]
-        if action_f == 7:  # e
+        if action == 1:  # e
             next_usage_time = self.next_usage_times.get(
                 f'use_e{self.current_char}', 0)
         else:
+            action_f = self.actions[action]
             next_usage_time = self.next_usage_times.get(action_f, 0)
         return next_usage_time > perf_counter()
+
+    def ready_actions(self) -> list:
+        """Return ready actions in a list of indeces."""
+        return [a for a in self.actions if not self.is_action_on_cooldown(a)]
 
     def random_action(self) -> int:
         """Return the key of a random ready action."""
         ready_actions = [a for a in self.actions if not self.is_action_on_cooldown(a)]
         return random.choice(ready_actions)
-
-    def test_all_actions(self):
-        self.move_forward()
-        self.move_backward()
-        self.move_left()
-        self.move_right()
-        self.basic_attack()
-        self.charged_attack()
-        self.switch_characters()
-        self.use_e()
 
     def reset(self, first_episode=False):
         """
@@ -226,10 +217,10 @@ class GenshinEnvironment:
         sleep(0.1)
 
         # Reset relevant attributes
-        self.current_char = 1
+        self.current_char = 0
         self.next_usage_times = {
+            'use_e0': 0,
             'use_e1': 0,
-            'use_e2': 0,
             self.switch_characters: 0
         }
 
@@ -248,26 +239,30 @@ class GenshinEnvironment:
         # Start counting time
         self.start_time = perf_counter()
 
-        # Return time elapsed
-        return 0
+        # Return first state: (current character, time elapsed)
+        return (self.current_char, 0)
 
-    def step(self, action):
+    def step(self, action, discrete_time_elapsed):
         """
         Execute given action and return (next_state, reward, terminated, truncated).
         """
         # Execute action
         self.actions[action]()
 
+        # Wait until next discrete time block
+        next_discrete_time = discrete_time_elapsed + 1
+        while perf_counter() < self.start_time + next_discrete_time:
+            sleep(0.001)
+
         reward = 1 if self.victory_event.is_set() else -1
         terminated = self.death_event.is_set() or self.victory_event.is_set()
         time_elapsed = perf_counter() - self.start_time
-        next_state = round(time_elapsed) if time_elapsed <= 89.5 else 89
 
         return (
-            next_state,
+            (self.current_char, next_discrete_time),
             reward,
             terminated,
-            time_elapsed > 89.5
+            time_elapsed > 90
         )
 
 def update_terminal_states(death_event, victory_event):
@@ -307,11 +302,9 @@ def update_terminal_states(death_event, victory_event):
             break
 
 class GenshinAgent:
-    def __init__(self, state_size, action_size, learning_rate, discount_rate, initial_epsilon, epsilon_decay, final_epsilon, qtable):
+    def __init__(self, learning_rate, discount_rate, initial_epsilon, epsilon_decay, final_epsilon, qtable):
         """Initialize a RL agent with an empty dict of state-action values (q_values), a learning rate and an epsilon.
         """
-        self.state_size = state_size
-        self.action_size = action_size
         self.learning_rate = learning_rate
         self.discount_rate = discount_rate
         self.epsilon = initial_epsilon
@@ -330,7 +323,17 @@ class GenshinAgent:
 
         # With p(1 - epsilon) act greedily (exploit)
         else:
-            return int(np.argmax(self.qtable[state]))
+            if not np.any(self.qtable[state]):  # if empty row
+                return env.random_action()
+            else:
+                a = np.argsort(self.qtable[state])[-1]
+                ready_actions = env.ready_actions()
+                i = -2
+                while a not in ready_actions:
+                    a = np.argsort(self.qtable[state])[i]
+                    i -= 1
+                return a
+
 
     def update(self, state, action, reward, new_state, terminated):
         """Update Q(s,a):= Q(s,a) + lr*[R(s,a) + discount_rate * max(Q(s',a') - Q(s, a)]"""
@@ -339,14 +342,14 @@ class GenshinAgent:
         delta = (
             reward
             + self.discount_rate * future_q_value
-            - self.qtable[state, action]
+            - self.qtable[state][action]
         )
 
         print('--------------------------------------------')
         print(self.qtable)
 
-        self.qtable[state, action] = (
-            self.qtable[state, action] + self.learning_rate * delta
+        self.qtable[state][action] = (
+            self.qtable[state][action] + self.learning_rate * delta
         )
 
     def decay_epsilon(self):
@@ -448,8 +451,9 @@ if __name__ == '__main__':
     final_epsilon = 0.1
 
     # sizes
-    state_size = 90  # 90s
-    action_size = 8  # no q
+    character_count = 2  # 0 - barbara, 1 - xg
+    time_steps = 90  # 90s
+    action_size = 3  # CA / E / switch
 
     # Try loading qmatrix and next_episode from file,
     # if the file doesn't exist, use defualt values
@@ -460,13 +464,11 @@ if __name__ == '__main__':
         logging.info(f'resuming training... next episode: {next_episode}')
     except FileNotFoundError:
         next_episode = 0
-        qtable = np.zeros((state_size, action_size))
+        qtable = np.zeros((character_count, time_steps, action_size))
         logging.info('beginning a new training...')
 
     env = GenshinEnvironment()
     agent = GenshinAgent(
-        state_size=state_size,
-        action_size=action_size,
         learning_rate=learning_rate,
         discount_rate=discount_rate,
         initial_epsilon=initial_epsilon,
@@ -488,15 +490,23 @@ if __name__ == '__main__':
         done = False
 
         # Play one episode
-        while not done:
+        while True:
             action = agent.get_action(state)
-            next_state, reward, terminated, truncated = env.step(action)
-
-            agent.update(state, action, reward, next_state, terminated)
+            # state[0] is current character, state[1] is discreticized time elapsed
+            next_state, reward, terminated, truncated = env.step(action, state[1])
 
             # terminated - either xiangling or barbara is dead OR we won
             # truncated - the trial has run out of time
-            done = terminated or truncated
+            if truncated:
+                logging.info('episode truncated..')
+                break
+
+            agent.update(state, action, reward, next_state, terminated)
+
+            if terminated:
+                logging.info('episode terminated..')
+                break
+
             state = next_state
 
         agent.decay_epsilon()
