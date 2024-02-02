@@ -202,7 +202,7 @@ class GenshinEnvironment:
 
         # Open domain and run it
         pyautogui.hotkey('f')
-        sleep(4)
+        sleep(6.5)
         pyautogui.click(*SELECT_TRIAL_VAPORIZE)
         pyautogui.click(*START_DOMAIN)
 
