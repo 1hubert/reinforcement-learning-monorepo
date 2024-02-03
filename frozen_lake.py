@@ -106,13 +106,16 @@ def run_env():
                 all_actions.append(action)
 
                 # Take the action (a) and observe the outcome state(s') and reward (r)
-                new_state, reward, terminated, truncated, info = env.step(action)
+                new_state, reward, terminated, truncated, _ = env.step(action)
+                # print(f'new_state={new_state} reward={reward} terminated={terminated}')
 
                 done = terminated or truncated
 
                 learner.qtable[state, action] = learner.update(
                     state, action, reward, new_state
                 )
+                # print(learner.qtable)
+                # print('-----------------')
 
                 total_rewards += reward
                 step += 1
