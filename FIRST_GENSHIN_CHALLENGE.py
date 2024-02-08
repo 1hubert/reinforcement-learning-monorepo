@@ -1,6 +1,4 @@
 """
-przeciwnicy w tych reaction tutorialach są (potwierdzone) w tych samych miejscach więc mogłoby się okazać, że tyle wystarczy by pobić mój osobisty wynik przynajmniej w jednej malutkiej części genshina (i mało przydatnej do zautomatyzowania), ale i tak byłby to zauważalny postęp ku "generalnym ai do zastąpienia ludzkich graczy".
-
 Vaporize Reactions Triggered: 0/15
 DMG Dealt to Monsters: 0/14000
 
@@ -33,7 +31,7 @@ potentially next approach:
 
 i just realized that not all people have their windows bar on top so i'd have to:
 a) subtract 40 on all Y axes
-b) have a variable like WINDOWS_BAR_BOTTOM=True based on which I'd adjust y values. the disadvantage of this is if the var would be in the main python file i'd i couldn't just `git add .` before every commit
+b) have a variable like WINDOWS_BAR_BOTTOM=True based on which I'd adjust y values.
 """
 from time import sleep, perf_counter
 import random
@@ -53,6 +51,10 @@ EXIT_DOMAIN_BUTTON = (380, 380)
 SELECT_TRIAL_VAPORIZE = (152, 128)
 START_DOMAIN = (570, 527)
 
+ocr = PaddleOCR(
+    lang='en',
+    rec_char_dict_path='./allowed_chars.txt'
+)
 
 class GenshinEnvironment:
     def __init__(self):
@@ -107,7 +109,7 @@ class GenshinEnvironment:
     def charged_attack(self):
         logging.debug(f'action: using charged attack (char={self.current_char})')
         pyautogui.mouseDown()
-        sleep(0.24)
+        sleep(0.25)
         pyautogui.mouseUp()
 
     def use_e(self):
@@ -233,6 +235,14 @@ class GenshinEnvironment:
         )
         self.update_terminal_states_process.start()
 
+        # Start a daemon process updating a shared value reactions done
+        self.reactions_done = multiprocessing.Value('i', 0)
+        self.extract_reactions_done_process = multiprocessing.Process(
+            target=extract_reactions_done,
+            args=[self.reactions_done]
+        )
+        self.extract_reactions_done_process.start()
+
         # Start the domain!
         pyautogui.hotkey('f')
 
@@ -246,15 +256,22 @@ class GenshinEnvironment:
         """
         Execute given action and return (next_state, reward, terminated, truncated).
         """
+        logging.debug(f'reactions done before: {self.reactions_done.value}')
+        reactions_done_before = self.reactions_done.value
+
         # Execute action
         self.actions[action]()
 
         # Wait until next discrete time block
-        next_discrete_time = discrete_time_elapsed + 1
+        next_discrete_time = discrete_time_elapsed + 2
         while perf_counter() < self.start_time + next_discrete_time:
             sleep(0.001)
 
-        reward = 1 if self.victory_event.is_set() else -1
+        # Check if reactions_done increased
+        reactions_done_increased = self.reactions_done.value > reactions_done_before
+        logging.debug(f'reactions done after: {self.reactions_done.value}')
+
+        reward = 1 if reactions_done_increased else 0
         terminated = self.death_event.is_set() or self.victory_event.is_set()
         time_elapsed = perf_counter() - self.start_time
 
@@ -284,7 +301,6 @@ def update_terminal_states(death_event, victory_event):
         if not pyautogui.pixelMatchesColor(*LEFT_END_HEALTHBAR, healthbar_color, tolerance=41):
             if healthbar_color == HEALTHBAR_RED:
                 death_event.set()
-                logging.info('character dead :(')
                 break
 
             healthbar_color = HEALTHBAR_RED
@@ -298,8 +314,32 @@ def update_terminal_states(death_event, victory_event):
             *LETTER_D, WHITE)):
 
             victory_event.set()
-            logging.info('VICTORY DETECTED :D')
             break
+
+def extract_reactions_done(shared_value, show_image=False):
+    while True:
+        # Grab image
+        image = ImageGrab.grab(bbox=(135, 165, 154, 178))  # ltrb
+
+        # Turn image into a numpy array
+        image = np.array(image)
+
+        # Show image
+        if show_image:
+            cv2.imshow('window', image)
+
+        # Get text
+        result = ocr.ocr(image, det=False, cls=False)[0][0]
+
+        # # Get first number out of str like '0 15'
+        result = result.split(' ')[0]
+        try:
+            result = int(result)
+            if shared_value.value < result <= 15:
+                with shared_value.get_lock():
+                    shared_value.value = result
+        except ValueError:  # Not a a valid int
+            pass
 
 class GenshinAgent:
     def __init__(self, learning_rate, discount_rate, initial_epsilon, epsilon_decay, final_epsilon, qtable):
@@ -393,32 +433,6 @@ def extract_damage_done(show_image=False):
         return False
 
 
-def extract_reactions_done(show_image=False):
-    # Grab image
-    image = ImageGrab.grab(bbox=(135, 165, 154, 178))  # ltrb
-
-    # Turn image into a numpy array
-    image = np.array(image)
-
-    # Show image
-    if show_image:
-        cv2.imshow('window', image)
-
-    # Get text
-    result = ocr.ocr(image, det=False, cls=False)[0][0]
-
-    # # Get first number out of str like '0 15'
-    result = result.split(' ')[0]
-
-    try:
-        if 0 <= int(result) <= 15:
-            return result
-        else:
-            return False
-    except ValueError:  # Not a a valid int
-        return False
-
-
 def main():
     while True:
         # Extract damage done from image
@@ -437,15 +451,10 @@ if __name__ == '__main__':
         force=True
     )
 
-    # ocr = PaddleOCR(
-    #     lang='en',
-    #     rec_char_dict_path='./allowed_chars.txt'
-    # )
-
     # hyerparameters
-    learning_rate = 0.01
+    learning_rate = 0.8
     discount_rate = 0.95
-    n_episodes = 10
+    n_episodes = 100
     initial_epsilon = 1.0
     epsilon_decay = initial_epsilon / (n_episodes / 2)
     final_epsilon = 0.1

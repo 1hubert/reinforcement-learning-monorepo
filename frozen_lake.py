@@ -1,6 +1,7 @@
 # Standard library imports
 from pathlib import Path
 from typing import NamedTuple
+import time
 
 # Third-party library imports
 import matplotlib.pyplot as plt
@@ -107,7 +108,7 @@ def run_env():
 
                 # Take the action (a) and observe the outcome state(s') and reward (r)
                 new_state, reward, terminated, truncated, _ = env.step(action)
-                # print(f'new_state={new_state} reward={reward} terminated={terminated}')
+                # print(f'action_took={action} action_took_in_state={state} new_state={new_state} reward={reward} terminated={terminated}')
 
                 done = terminated or truncated
 
@@ -116,6 +117,7 @@ def run_env():
                 )
                 # print(learner.qtable)
                 # print('-----------------')
+                # time.sleep(0.1)
 
                 total_rewards += reward
                 step += 1
